@@ -1,0 +1,282 @@
+---
+title: "Cash & Accounting Management"
+description: "Track income, expenses, and cash flow for your business"
+icon: "money-bill-trend-up"
+---
+
+## Overview
+
+The Cash & Accounting module (Caja & Contabilidad) provides comprehensive tracking of your business's financial transactions, including income, expenses, and cash flow management. This feature helps you maintain accurate financial records and monitor your business's financial health in real-time.
+
+<Note>
+  This module is different from the [Cash Register](/features/cash-register), which focuses on daily register operations. Cash Management provides broader accounting and financial tracking capabilities.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Income Tracking" icon="arrow-trend-up">
+    Monitor all revenue streams and sales income
+  </Card>
+  <Card title="Expense Management" icon="arrow-trend-down">
+    Track business expenses and outgoing payments
+  </Card>
+  <Card title="Cash Flow Analysis" icon="chart-line">
+    Calculate net cash flow and financial balances
+  </Card>
+  <Card title="Payment Method Breakdown" icon="credit-card">
+    Separate tracking for cash, card, and transfer payments
+  </Card>
+</CardGroup>
+
+## Financial Dashboard
+
+The Cash Management module displays four key financial metrics:
+
+### Income (Ingresos)
+Total revenue from all sales and income transactions for the selected period.
+
+```typescript
+totalIncome = transactions
+  .filter((t) => t.type === 'income')
+  .reduce((sum, t) => sum + t.amount, 0);
+```
+
+### Expenses (Egresos)
+Total outgoing payments including purchases, services, and other expenses.
+
+```typescript
+totalExpenses = transactions
+  .filter((t) => t.type === 'expense')
+  .reduce((sum, t) => sum + t.amount, 0);
+```
+
+### Net Balance
+The difference between income and expenses, showing overall profitability.
+
+```typescript
+netFlow = totalIncome - totalExpenses;
+```
+
+### Payment Method Balances
+
+**Cash Balance:**
+```typescript
+cashBalance = transactions
+  .filter((t) => t.paymentMethod === 'efectivo')
+  .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+```
+
+**Card Balance:**
+```typescript
+cardBalance = transactions
+  .filter((t) => t.paymentMethod === 'tarjeta')
+  .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+```
+
+## Transaction Types
+
+### Income Transactions
+- **Type**: `'income'`
+- **Examples**: Sales, payments received, service revenue
+- **Display**: Green/success badge
+- **Impact**: Increases cash balance
+
+### Expense Transactions
+- **Type**: `'expense'`
+- **Examples**: Inventory purchases, service payments, utilities
+- **Display**: Red/danger badge
+- **Impact**: Decreases cash balance
+
+## Transaction Structure
+
+Each transaction record includes:
+
+```typescript
+interface Transaction {
+  id: string;
+  type: 'income' | 'expense';
+  description: string;
+  amount: number;
+  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia';
+  date: string;
+  category: string;
+}
+```
+
+<ParamField path="id" type="string" required>
+  Unique transaction identifier
+</ParamField>
+
+<ParamField path="type" type="'income' | 'expense'" required>
+  Transaction type - income or expense
+</ParamField>
+
+<ParamField path="description" type="string" required>
+  Description of the transaction (e.g., "Venta #001", "Compra inventario")
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Transaction amount in local currency
+</ParamField>
+
+<ParamField path="paymentMethod" type="string" required>
+  Payment method used: efectivo (cash), tarjeta (card), or transferencia (transfer)
+</ParamField>
+
+<ParamField path="date" type="string" required>
+  Transaction date and time (format: "YYYY-MM-DD HH:mm")
+</ParamField>
+
+<ParamField path="category" type="string" required>
+  Transaction category (e.g., "ventas", "inventario", "servicios")
+</ParamField>
+
+## Period Filters
+
+View financial data for different time periods:
+
+### Available Periods
+
+<Tabs>
+  <Tab title="Today">
+    View transactions and balances for the current day
+    
+    ```typescript
+    { label: 'Hoy', value: 'today' }
+    ```
+  </Tab>
+  
+  <Tab title="This Week">
+    Weekly financial summary
+    
+    ```typescript
+    { label: 'Esta Semana', value: 'week' }
+    ```
+  </Tab>
+  
+  <Tab title="This Month">
+    Monthly financial overview
+    
+    ```typescript
+    { label: 'Este Mes', value: 'month' }
+    ```
+  </Tab>
+</Tabs>
+
+## Creating New Transactions
+
+Click the "Nuevo Movimiento" (New Transaction) button to record a new financial transaction:
+
+<Steps>
+  <Step title="Click New Transaction">
+    Use the "Nuevo Movimiento" button in the top-right corner
+  </Step>
+  
+  <Step title="Select Transaction Type">
+    Choose between income or expense
+  </Step>
+  
+  <Step title="Enter Details">
+    - Description
+    - Amount
+    - Payment method
+    - Category
+  </Step>
+  
+  <Step title="Save Transaction">
+    Transaction is recorded and balances are updated automatically
+  </Step>
+</Steps>
+
+## Financial Indicators
+
+The module displays trend indicators showing performance compared to the previous period:
+
+### Positive Trends
+- **Icon**: Trending up arrow
+- **Color**: Green
+- **Example**: "+12.5% vs ayer" (compared to yesterday)
+
+### Negative Trends
+- **Icon**: Trending down arrow
+- **Color**: Red
+- **Example**: "-5.2% vs ayer"
+
+## Integration with Other Modules
+
+### Sales Integration
+Income transactions are automatically created from:
+- POS sales (from `/pages/pos`)
+- Invoice payments (from `/pages/invoices`)
+
+### Purchase Integration
+Expense transactions are created from:
+- Purchase orders (from `/pages/purchases`)
+- Supplier payments (from `/pages/suppliers`)
+
+### Cash Register Relationship
+While the Cash Register tracks daily register operations, Cash Management provides:
+- Longer-term financial tracking
+- Expense categorization
+- Multi-payment method analysis
+- Trend analysis and reporting
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Daily Financial Review">
+    Check today's income vs expenses to monitor daily profitability
+  </Accordion>
+  
+  <Accordion title="Cash Flow Management">
+    Monitor cash and card balances separately to plan bank deposits
+  </Accordion>
+  <Accordion title="Expense Tracking">
+    Record and categorize all business expenses for accounting purposes
+  </Accordion>
+  
+  <Accordion title="Period Comparison">
+    Compare weekly or monthly performance using trend indicators
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Regular Entry" icon="calendar-check">
+    Record transactions daily for accurate financial tracking
+  </Card>
+  
+  <Card title="Categorize Properly" icon="tags">
+    Use consistent categories for better reporting and analysis
+  </Card>
+  
+  <Card title="Reconcile Regularly" icon="balance-scale">
+    Compare Cash Management totals with Cash Register reconciliation
+  </Card>
+  
+  <Card title="Monitor Trends" icon="chart-line">
+    Review trend indicators to identify financial patterns
+  </Card>
+</CardGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Cash Register" icon="cash-register" href="/features/cash-register">
+    Daily register operations and reconciliation
+  </Card>
+  
+  <Card title="Reports & Analytics" icon="chart-pie" href="/features/reports-analytics">
+    Comprehensive financial reporting
+  </Card>
+  
+  <Card title="Purchases" icon="shopping-cart" href="/guides/purchases">
+    Record expenses from purchase orders
+  </Card>
+  
+  <Card title="Sales & Invoicing" icon="file-invoice-dollar" href="/features/sales-invoicing">
+    Track income from sales transactions
+  </Card>
+</CardGroup>

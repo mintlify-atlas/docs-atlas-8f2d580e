@@ -53,6 +53,7 @@
               "features/whatsapp-integration",
               "features/financing",
               "features/promotions",
+              "features/cash-management",
               "features/reports-analytics"
             ]
           },
