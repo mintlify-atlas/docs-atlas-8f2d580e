@@ -1,0 +1,112 @@
+{
+  "projectType": "saas",
+  "projectName": "Karma POS",
+  "projectDescription": "A comprehensive Point of Sale (POS) system built with Angular for retail businesses, featuring inventory management, sales, customer management, and WhatsApp integration.",
+  "theme": "almond",
+  "primaryColor": "#3cbcab",
+  "lightColor": "#349b8b",
+  "darkColor": "#949494",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/pos-system",
+              "features/inventory-management",
+              "features/customer-management",
+              "features/sales-invoicing",
+              "features/cash-register"
+            ]
+          },
+          {
+            "group": "Advanced Features",
+            "pages": [
+              "features/whatsapp-integration",
+              "features/financing",
+              "features/promotions",
+              "features/reports-analytics"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "admin/company-settings",
+              "admin/user-permissions",
+              "admin/warehouses",
+              "admin/categories"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Daily Operations",
+            "pages": [
+              "guides/making-sales",
+              "guides/managing-inventory",
+              "guides/processing-payments",
+              "guides/handling-quotes"
+            ]
+          },
+          {
+            "group": "Management",
+            "pages": [
+              "guides/suppliers",
+              "guides/purchases",
+              "guides/low-stock-alerts",
+              "guides/agents"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Point of Sale (POS) interface with barcode scanning",
+    "Comprehensive inventory management with low-stock alerts",
+    "Customer and supplier management",
+    "Sales invoicing and quotes generation",
+    "Cash register with multi-payment methods",
+    "WhatsApp multi-agent chat integration",
+    "Financing and credit management",
+    "Promotions and discount campaigns",
+    "Multi-warehouse support",
+    "Role-based permissions system",
+    "Real-time reporting and analytics",
+    "Purchase order management"
+  ],
+  "publicApiSurface": [
+    "POS - /pages/pos",
+    "Inventory - /pages/inventory",
+    "Customers - /pages/customers",
+    "Suppliers - /pages/suppliers",
+    "Invoices - /pages/invoices",
+    "Cash Register - /pages/cash-register",
+    "Reports - /pages/reports",
+    "Promotions - /pages/promotions",
+    "Financing - /pages/financing",
+    "WhatsApp Chats - /pages/whatsapp-chats",
+    "Settings - /pages/settings",
+    "Permissions - /pages/permissions",
+    "Categories - /pages/category",
+    "Warehouses - /pages/warehouse",
+    "Quotes - /pages/quotes",
+    "Purchases - /pages/purchases",
+    "Low Stock - /pages/low-stock",
+    "Agents - /pages/agents",
+    "Company - /pages/company"
+  ]
+}
