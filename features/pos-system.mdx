@@ -1,0 +1,323 @@
+---
+title: POS System
+description: Complete point of sale interface for processing sales transactions
+icon: cash-register
+---
+
+## Overview
+
+The Karma POS system provides a comprehensive point-of-sale interface for retail operations. Built with Angular and PrimeNG, it offers barcode scanning, product selection, cart management, customer selection, and flexible payment processing.
+
+## Core Features
+
+### Barcode Scanning
+
+The POS system supports real-time barcode scanning for quick product lookup:
+
+```typescript
+searchByBarcode() {
+    if (!this.barcodeSearch.trim()) return;
+
+    const product = this.products.find(
+        (p) => p.barcode === this.barcodeSearch.trim()
+    );
+
+    if (product) {
+        this.addProduct(product);
+    } else {
+        this.showToast('warn', 'No encontrado', 
+            `No existe producto con ese código.`);
+    }
+
+    this.barcodeSearch = '';
+    this.focusBarcodeInput();
+}
+```
+
+**Features:**
+- Instant barcode lookup
+- Automatic focus management
+- Product not found alerts
+- Support for standard barcode formats
+
+### Product Search
+
+Multiple search methods are available:
+
+- **Barcode Search**: Scan or manually enter product barcodes
+- **Product Code Search**: Search by internal product codes
+- **Name Search**: Find products by name (F2 hotkey)
+
+```typescript
+searchByProductCode() {
+    if (!this.productCodeSearch.trim()) return;
+
+    const product = this.products.find((p) => 
+        p.code.toString() === this.productCodeSearch.toLowerCase() || 
+        p.name.toLowerCase().includes(this.productCodeSearch.toLowerCase())
+    );
+
+    if (product) {
+        this.addProduct(product);
+    }
+}
+```
+
+### Shopping Cart Management
+
+The cart component handles:
+
+<CardGroup cols={2}>
+  <Card title="Add Products" icon="plus">
+    Add items to cart with automatic quantity management
+  </Card>
+  <Card title="Update Quantities" icon="arrows-rotate">
+    Modify product quantities with real-time stock validation
+  </Card>
+  <Card title="Apply Discounts" icon="percent">
+    Per-item and general discounts supported
+  </Card>
+  <Card title="Remove Items" icon="trash">
+    Remove products with automatic stock release
+  </Card>
+</CardGroup>
+
+### Stock Management
+
+The POS integrates with real-time stock reservation:
+
+```typescript
+reserveStock(item: CartItem, cantidad: number, existe: boolean) {
+    this.posService
+        .validateAndReserveStock({
+            action: 'RESERVAR',
+            productId: item.id,
+            quantity: cantidad,
+            companiaId: this.companiaId,
+            userId: this.userId,
+            facturaTempId: this.activeInvoice!.tempId
+        })
+        .subscribe({
+            next: (res) => {
+                if (res.data.success != 1) {
+                    // Rollback if insufficient stock
+                    item.quantity = item.prevQuantity;
+                    this.showToast('warn', 'Stock insuficiente', 
+                        `Solo hay ${res.data.stockDisponible} unidades más disponibles`);
+                } else {
+                    // Confirm the quantity change
+                    if (!existe) {
+                        this.activeInvoice?.items.push(item);
+                    }
+                    item.prevQuantity = item.quantity;
+                    this.updateTotals(this.activeInvoice!);
+                }
+            }
+        });
+}
+```
+
+<Note>
+  Stock is automatically reserved when products are added to the cart and released when removed or quantities are reduced.
+</Note>
+
+### Customer Selection
+
+Select or create customers for each transaction:
+
+- Search customers by name or document
+- Create new customers on-the-fly
+- Support for both individual and corporate customers
+- Default "Final Consumer" option
+
+### Multi-Invoice Support
+
+Handle multiple customers simultaneously:
+
+```typescript
+createNewInvoice(index: number) {
+    const newInvoice: Invoice = {
+        invoiceNumber: `FV-${this.invoiceCounter.toString().padStart(3, '0')}`,
+        index: index,
+        date: new Date(),
+        customer: null,
+        items: [],
+        subtotal: 0,
+        grossSubtotal: 0,
+        generalDiscount: 0,
+        detailDiscount: 0,
+        tempId: uuidv4(),
+        totalVat: 0,
+        total: 0,
+        paymentMethods: [{ type: 'cash', amount: 0 }]
+    };
+
+    this.invoices.push(newInvoice);
+    this.activeInvoice = newInvoice;
+    this.invoiceCounter++;
+}
+```
+
+**Use Cases:**
+- Serve multiple customers without losing their carts
+- Quick switching between active invoices
+- Each invoice maintains its own state
+
+### Pricing Calculations
+
+Automatic calculation of:
+
+- **Gross Subtotal**: Total before discounts
+- **Detail Discounts**: Per-product discounts
+- **General Discount**: Overall percentage discount
+- **VAT/IVA**: Configurable tax rate
+- **Final Total**: Complete calculation with all factors
+
+```typescript
+updateTotals(invoice: Invoice): void {
+    let grossSubtotal = 0;
+    let totalDiscountDetail = 0;
+
+    // Calculate per-item values
+    for (const item of invoice.items) {
+        const discountPercent = item.discount || 0;
+        const discountValue = (item.price * item.quantity * discountPercent) / 100;
+        const itemSubtotal = item.price * item.quantity;
+        const itemTotal = itemSubtotal - discountValue;
+
+        item.discountValue = discountValue;
+        item.subtotal = itemSubtotal;
+        item.total = itemTotal;
+
+        grossSubtotal += itemSubtotal;
+        totalDiscountDetail += discountValue;
+    }
+
+    const ivaPercentage = this.ivaRate / 100;
+    const generalDiscountAmount = 
+        (grossSubtotal - totalDiscountDetail) * (invoice.generalDiscount / 100);
+    const netSubtotal = grossSubtotal - totalDiscountDetail - generalDiscountAmount;
+    const totalVat = netSubtotal * ivaPercentage;
+
+    invoice.grossSubtotal = grossSubtotal;
+    invoice.subtotal = netSubtotal;
+    invoice.detailDiscount = totalDiscountDetail;
+    invoice.totalVat = totalVat;
+    invoice.total = netSubtotal + totalVat;
+}
+```
+
+## Keyboard Shortcuts
+
+<AccordionGroup>
+  <Accordion title="F2 - Search Product">
+    Opens the product search dialog for quick lookup
+  </Accordion>
+  <Accordion title="F3 - Payment">
+    Opens the payment dialog to process the current invoice
+  </Accordion>
+  <Accordion title="F4 - Process Sale">
+    Completes the current transaction
+  </Accordion>
+  <Accordion title="F5 - New Invoice">
+    Creates a new invoice for another customer
+  </Accordion>
+</AccordionGroup>
+
+## Payment Processing
+
+The POS supports multiple payment methods:
+
+- **Cash**: Direct cash payment
+- **Card**: Credit/debit card payments
+- **Transfer**: Bank transfers
+- **Financed**: Installment payments with configurable terms
+- **Other**: Additional payment types
+
+```typescript
+handleCheckout() {
+    if (!this.activeInvoice) return;
+    const invoice = this.activeInvoice;
+
+    // Validate items exist
+    if (invoice.items.length === 0) {
+        this.showToast('warn', 'Sin productos', 
+            'Agrega productos antes de procesar.');
+        return;
+    }
+
+    // Validate payment amount
+    const totalPayments = invoice.paymentMethods.reduce(
+        (s, p) => s + (p.amount || 0), 0
+    );
+    if (Math.abs(totalPayments - invoice.total) > 0.01) {
+        this.showToast('error', 'Pago incompleto', 
+            'Verifica los montos.');
+        return;
+    }
+
+    this.saveInvoice(invoice);
+}
+```
+
+## Permissions
+
+The POS system respects role-based permissions:
+
+- **canView**: View the POS interface
+- **canCreate**: Create new sales
+- **canEdit**: Modify invoices
+- **canDelete**: Delete transactions
+- **canExport**: Export sales data
+
+<Warning>
+  Users without the appropriate permissions will not be able to access specific POS features.
+</Warning>
+
+## API Integration
+
+### Create Invoice
+
+```typescript
+createInvoice(invoice: any) {
+    return this.http.post<ApiResponse<any>>(
+        `${this.apiUrl}pos/CreateInvoice`, 
+        invoice
+    );
+}
+```
+
+### Stock Validation
+
+```typescript
+validateAndReserveStock(payload: StockReservationRequest) {
+    return this.http.post<ApiResponse<StockReservationResponse>>(
+        `${this.apiUrl}pos/ValidateAndReserve`, 
+        payload
+    );
+}
+```
+
+## Component Location
+
+<Info>
+  **Source**: `src/app/components/pages/pos-folder/pos/pos.component.ts`  
+  **Service**: `src/app/components/services/pos.service.ts`
+</Info>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Inventory Management" icon="boxes-stacked" href="/features/inventory-management">
+    Manage product catalog and stock levels
+  </Card>
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    Maintain customer records and information
+  </Card>
+  <Card title="Sales & Invoicing" icon="file-invoice" href="/features/sales-invoicing">
+    View and manage sales invoices
+  </Card>
+  <Card title="Cash Register" icon="cash-register" href="/features/cash-register">
+    Manage cash register operations
+  </Card>
+</CardGroup>

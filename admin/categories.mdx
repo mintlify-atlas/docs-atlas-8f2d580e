@@ -1,0 +1,510 @@
+---
+title: Categories
+description: Organize your product catalog with hierarchical categories in Karma POS
+icon: folder-tree
+---
+
+## Overview
+
+The Categories module helps you organize products into logical groups for easier navigation, reporting, and inventory management. Categories enable better product discovery and streamlined catalog management.
+
+<Info>
+  Categories are company-specific. Each company maintains its own category structure.
+</Info>
+
+## Category Structure
+
+### Category Data Model
+
+```typescript
+interface Category {
+  categoryId?: string;
+  companiaId: number;
+  name: string;           // Category name
+  description?: string;   // Category description
+  active: boolean;        // Active status
+}
+```
+
+### Required Fields
+
+<ParamField path="name" type="string" required>
+  Name of the category (e.g., "Electronics", "Beverages", "Office Supplies")
+</ParamField>
+
+### Optional Fields
+
+<ParamField path="description" type="string">
+  Detailed description of what products belong in this category
+</ParamField>
+
+<ParamField path="active" type="boolean" default="true">
+  Whether the category is currently active in the system
+</ParamField>
+
+## Managing Categories
+
+### Creating a Category
+
+<Steps>
+  <Step title="Navigate to Categories">
+    Access the Categories module from the Administration menu.
+  </Step>
+  
+  <Step title="Click 'Nueva Categoría'">
+    Opens the category creation dialog. Requires `canCreate` permission.
+  </Step>
+  
+  <Step title="Enter Category Details">
+    Fill in the category information:
+    
+    ```typescript
+    {
+      name: 'Electronics',
+      description: 'Electronic devices and accessories',
+      active: true
+    }
+    ```
+  </Step>
+  
+  <Step title="Save Category">
+    Click "Guardar" to create the category.
+  </Step>
+</Steps>
+
+<Note>
+  Categories are automatically associated with your current company (`companiaId`) from your session.
+</Note>
+
+### Editing a Category
+
+<Steps>
+  <Step title="Find the Category">
+    Locate the category in the categories table.
+  </Step>
+  
+  <Step title="Click Edit">
+    Click the edit (pencil) icon. Requires `canEdit` permission.
+  </Step>
+  
+  <Step title="Modify Information">
+    Update the name or description as needed.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click "Guardar" to update the category.
+  </Step>
+</Steps>
+
+### Searching Categories
+
+Filter categories using the search bar:
+
+```typescript
+filterCategories() {
+  const term = this.searchTerm.toLowerCase();
+  
+  this.filteredCategories = this.categories.filter(cat => 
+    cat.name.toLowerCase().includes(term) || 
+    (cat.description?.toLowerCase().includes(term) ?? false)
+  );
+}
+```
+
+Search matches:
+- Category name
+- Category description
+
+### Deactivating a Category
+
+Categories use soft deletion (deactivation):
+
+```typescript
+deleteCategory(category: Category) {
+  masterService.deleteCategory({ 
+    ...category, 
+    active: false 
+  }).subscribe({
+    next: (res) => {
+      if (res.code === 0) {
+        // Category deactivated successfully
+      }
+    }
+  });
+}
+```
+
+<Warning>
+  Deactivating a category does not delete products assigned to it. Products retain their category assignment, but the category won't appear in active category lists.
+</Warning>
+
+## Validation Rules
+
+### Name Validation
+
+The category name must:
+- Not be empty
+- Not consist only of whitespace
+
+```typescript
+if (!newCategory.name.trim()) {
+  messageService.add({
+    severity: 'warn',
+    summary: 'Campo obligatorio',
+    detail: 'El nombre de la categoría es requerido.'
+  });
+  return;
+}
+```
+
+### Description Validation
+
+The description field is optional and can be:
+- Empty
+- Any length (within reasonable database limits)
+- Used for internal documentation
+
+## Permission Model
+
+The Categories module uses the "Categorías" permission set:
+
+<CardGroup cols={2}>
+  <Card title="canView" icon="eye">
+    View category list and details
+  </Card>
+  <Card title="canCreate" icon="plus">
+    Create new categories
+  </Card>
+  <Card title="canEdit" icon="pen">
+    Modify category information
+  </Card>
+  <Card title="canDelete" icon="trash">
+    Deactivate categories
+  </Card>
+  <Card title="canExport" icon="download">
+    Export category data
+  </Card>
+</CardGroup>
+
+```typescript
+private applyPermissions(): void {
+  const moduleName = 'Categorías';
+  
+  const permission = this.permissions.find(
+    p => p.module === moduleName
+  );
+  
+  if (permission) {
+    this.canView = permission.canView;
+    this.canCreate = permission.canCreate;
+    this.canEdit = permission.canEdit;
+    this.canDelete = permission.canDelete;
+    this.canExport = permission.canExport;
+  }
+}
+```
+
+## API Integration
+
+### Load Categories
+
+```typescript
+masterService.getCategories(companiaId).subscribe({
+  next: (res: ApiResponse<Category[]>) => {
+    this.categories = res.data || [];
+    this.filteredCategories = this.categories;
+  },
+  error: () => {
+    // Handle error
+  }
+});
+```
+
+### Create/Update Category
+
+```typescript
+const isEditing = !!this.editingCategory;
+
+masterService.createCategory(newCategory).subscribe({
+  next: (res) => {
+    if (res.code === 0) {
+      const message = isEditing 
+        ? 'Categoría actualizada correctamente.' 
+        : 'Categoría creada correctamente.';
+      
+      // Reload categories
+      this.loadCategories();
+    }
+  }
+});
+```
+
+### Deactivate Category
+
+```typescript
+masterService.deleteCategory({ 
+  ...category, 
+  active: false 
+}).subscribe({
+  next: (res) => {
+    if (res.code === 0) {
+      // Category deactivated
+    }
+  }
+});
+```
+
+## Category Assignment
+
+### Assigning Products to Categories
+
+When creating or editing products, select a category from the available options:
+
+```typescript
+interface Product {
+  productId: string;
+  name: string;
+  categoryId: string;    // Links to category
+  categoryName: string;  // For display
+  // ... other fields
+}
+```
+
+<Tip>
+  Only active categories typically appear in product category dropdowns.
+</Tip>
+
+### Category-Based Filtering
+
+Categories enable powerful filtering in:
+- **Product Lists:** Filter products by category
+- **Reports:** Generate sales reports by category
+- **Inventory:** View inventory levels per category
+- **Analysis:** Analyze performance by product category
+
+## Category Organization Strategies
+
+<AccordionGroup>
+  <Accordion title="Retail Store Categories">
+    Organize by department or product type:
+    
+    - **Clothing**
+    - **Footwear**
+    - **Accessories**
+    - **Home Goods**
+    - **Electronics**
+    
+    This structure mirrors how customers shop.
+  </Accordion>
+  
+  <Accordion title="Restaurant Categories">
+    Organize by menu section:
+    
+    - **Appetizers**
+    - **Main Courses**
+    - **Desserts**
+    - **Beverages**
+    - **Alcoholic Drinks**
+    
+    Helps with menu organization and reporting.
+  </Accordion>
+  
+  <Accordion title="Wholesale/Distribution">
+    Organize by supplier or product line:
+    
+    - **Brand A Products**
+    - **Brand B Products**
+    - **Private Label**
+    - **Import Items**
+    
+    Useful for tracking vendor performance.
+  </Accordion>
+  
+  <Accordion title="Service Business">
+    Organize by service type:
+    
+    - **Consultation Services**
+    - **Installation Services**
+    - **Maintenance Services**
+    - **Training Services**
+    
+    Even service-based businesses benefit from categorization.
+  </Accordion>
+  
+  <Accordion title="Multi-Brand Retail">
+    Mix product type and brand:
+    
+    - **Smartphones**
+    - **Laptops**
+    - **Tablets**
+    - **Accessories**
+    - **Services & Warranty**
+    
+    Balances product type with merchandising needs.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep Categories Broad Initially">
+    Start with broad categories and create subcategories later as your catalog grows. This prevents over-fragmentation early on.
+  </Accordion>
+  
+  <Accordion title="Use Descriptive Names">
+    Choose clear, unambiguous category names. Avoid internal jargon that staff might not understand.
+  </Accordion>
+  
+  <Accordion title="Leverage Descriptions">
+    Use the description field to document what belongs in each category. This helps with consistent product classification.
+    
+    ```typescript
+    {
+      name: 'Beverages',
+      description: 'All non-alcoholic drinks including sodas, juices, water, coffee, and tea'
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Plan for Growth">
+    Design your category structure with expansion in mind. Leave room for new product lines.
+  </Accordion>
+  
+  <Accordion title="Deactivate, Don't Delete">
+    Always deactivate unused categories instead of attempting to delete them. This preserves historical data integrity.
+  </Accordion>
+  
+  <Accordion title="Regular Category Review">
+    Periodically review your category structure. Merge similar categories or split categories that have become too broad.
+  </Accordion>
+  
+  <Accordion title="Consider Reporting Needs">
+    Design categories with reporting in mind. Categories should align with how you want to analyze business performance.
+  </Accordion>
+</AccordionGroup>
+
+## Use Cases by Industry
+
+<Tabs>
+  <Tab title="Retail">
+    **Electronics Store**
+    - Smartphones & Tablets
+    - Computers & Laptops
+    - Audio & Video
+    - Gaming
+    - Accessories & Cables
+    - Smart Home
+  </Tab>
+  
+  <Tab title="Food & Beverage">
+    **Restaurant**
+    - Starters & Appetizers
+    - Soups & Salads
+    - Main Courses
+    - Side Dishes
+    - Desserts
+    - Hot Beverages
+    - Cold Beverages
+    - Alcoholic Drinks
+  </Tab>
+  
+  <Tab title="Fashion">
+    **Clothing Store**
+    - Men's Clothing
+    - Women's Clothing
+    - Children's Clothing
+    - Shoes
+    - Bags & Accessories
+    - Jewelry
+    - Seasonal Items
+  </Tab>
+  
+  <Tab title="Services">
+    **Repair Shop**
+    - Diagnostic Services
+    - Repair Services
+    - Parts & Components
+    - Accessories
+    - Warranty & Protection Plans
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot save category without name">
+    **Error:** "El nombre de la categoría es requerido."
+    
+    **Solution:** The category name is a required field. Provide a non-empty name before saving.
+  </Accordion>
+  
+  <Accordion title="Categories not loading">
+    **Error:** "No se pudieron cargar las categorías."
+    
+    **Solution:**
+    1. Verify network connection
+    2. Check that backend API is accessible
+    3. Confirm your session hasn't expired
+    4. Contact system administrator if issue persists
+  </Accordion>
+  
+  <Accordion title="Cannot deactivate category">
+    **Error:** "No se pudo eliminar la categoría."
+    
+    **Solution:**
+    1. Verify you have `canDelete` permission for the Categories module
+    2. Check if there are system constraints preventing deactivation
+    3. Review server logs for specific error details
+  </Accordion>
+  
+  <Accordion title="Category not appearing in product dropdown">
+    **Issue:** Category doesn't show when creating/editing products.
+    
+    **Solution:** 
+    - Verify the category's `active` flag is set to `true`
+    - Inactive categories are typically filtered out of operational dropdowns
+    - Re-activate the category if needed
+  </Accordion>
+  
+  <Accordion title="Duplicate category names">
+    **Issue:** Created multiple categories with the same name.
+    
+    **Solution:** While the system allows duplicate names, it's best practice to use unique names. Consider:
+    - Adding qualifiers (e.g., "Beverages - Hot" vs "Beverages - Cold")
+    - Using the description field to differentiate
+    - Deactivating duplicate categories
+  </Accordion>
+</AccordionGroup>
+
+## Category Reporting
+
+Categories enable powerful business analysis:
+
+<CardGroup cols={2}>
+  <Card title="Sales by Category" icon="chart-line">
+    Track which product categories generate the most revenue
+  </Card>
+  <Card title="Inventory by Category" icon="boxes-stacked">
+    Monitor stock levels across different product categories
+  </Card>
+  <Card title="Profit Margins" icon="sack-dollar">
+    Compare profitability across categories
+  </Card>
+  <Card title="Top Performers" icon="trophy">
+    Identify best-selling categories for strategic planning
+  </Card>
+</CardGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Product Catalog" icon="tag" href="/features/inventory-management">
+    Learn how to create and manage products with categories
+  </Card>
+  <Card title="Inventory Reports" icon="chart-bar" href="/features/reports-analytics">
+    Generate reports filtered by category
+  </Card>
+  <Card title="Sales Analytics" icon="chart-pie" href="/features/reports-analytics">
+    Analyze sales performance by product category
+  </Card>
+</CardGroup>

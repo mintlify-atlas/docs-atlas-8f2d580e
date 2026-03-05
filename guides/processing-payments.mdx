@@ -1,0 +1,637 @@
+---
+title: Processing Payments
+description: Complete guide to accepting payments in Karma POS including cash, cards, and split payments
+icon: credit-card
+---
+
+## Overview
+
+Karma POS supports flexible payment processing with multiple payment methods, split payments, and automatic change calculation. This guide covers everything you need to know about handling payments efficiently.
+
+## Payment Methods Available
+
+Karma POS supports five payment types:
+
+<CardGroup cols={2}>
+  <Card title="💵 Cash" icon="money-bill">
+    Traditional cash payments with automatic change calculation
+  </Card>
+  
+  <Card title="💳 Card" icon="credit-card">
+    Credit and debit card payments
+  </Card>
+  
+  <Card title="🏦 Transfer" icon="building-columns">
+    Bank transfers and electronic payments
+  </Card>
+  
+  <Card title="📅 Financed" icon="calendar">
+    Installment payments with configurable months
+  </Card>
+  
+  <Card title="📝 Other" icon="ellipsis">
+    Custom payment methods
+  </Card>
+</CardGroup>
+
+## Opening the Payment Dialog
+
+After adding products to the cart, open the payment screen:
+
+<Steps>
+  <Step title="Keyboard Shortcut">
+    Press **F3** to instantly open the payment dialog.
+  </Step>
+  
+  <Step title="Button Click">
+    Click the **Payment** or **Checkout** button in the POS interface.
+  </Step>
+  
+  <Step title="Automatic Focus">
+    The first payment amount field is automatically focused for quick entry.
+  </Step>
+</Steps>
+
+## Understanding the Payment Screen
+
+The payment dialog displays:
+
+### Sale Summary
+
+- **Cart Items**: List of all products with quantities and prices
+- **Gross Subtotal**: Total before any discounts
+- **Detail Discounts**: Sum of product-level discounts
+- **General Discount**: Percentage discount applied to entire sale
+- **Subtotal**: Net amount after discounts, before tax
+- **Tax (IVA)**: Calculated tax amount (if configured)
+- **Total**: Final amount due
+
+### Payment Information
+
+- **Payment Method Selector**: Dropdown to choose payment type
+- **Amount Field**: Input for payment amount
+- **Difference Display**: Shows remaining balance or overpayment
+- **Add Payment Method Button**: For split payments
+
+### Optional Fields
+
+- **Customer Selector**: Choose or confirm customer
+- **Delivery Information**: Address and delivery details
+- **Notes**: Special instructions or comments
+
+## Processing Cash Payments
+
+<Steps>
+  <Step title="Verify Total">
+    Confirm the total amount displayed at the bottom of the screen.
+  </Step>
+  
+  <Step title="Select Cash Method">
+    The payment type defaults to **Cash (💵 Efectivo)**. Leave it selected.
+  </Step>
+  
+  <Step title="Enter Amount Received">
+    Type the amount the customer gave you:
+    - Enter exact amount if paying precisely
+    - Enter larger amount if customer is paying with larger bills
+  </Step>
+  
+  <Step title="Quick Fill Option">
+    Click **Fill Exact Amount** button to auto-fill the exact total owed.
+  </Step>
+  
+  <Step title="Calculate Change">
+    The **Difference** field shows:
+    - **Positive number**: Change to give back to customer
+    - **Zero**: Exact payment
+    - **Negative number**: Still owe this amount
+    
+    Example: 
+    - Total: $50.00
+    - Amount Received: $100.00
+    - Difference: +$50.00 (give $50 change)
+  </Step>
+  
+  <Step title="Complete Payment">
+    When difference is ≥ $0.00:
+    - Press **Enter** on keyboard
+    - Or click **Process Payment** button
+  </Step>
+</Steps>
+
+<Tip>
+The system prevents processing if payment is incomplete (difference < $0). You must receive at least the total amount due.
+</Tip>
+
+## Processing Card Payments
+
+<Steps>
+  <Step title="Select Card Method">
+    Click the payment type dropdown and select **💳 Tarjeta (Card)**.
+  </Step>
+  
+  <Step title="Process Card Transaction">
+    Use your external card terminal to process the payment:
+    - Swipe, insert, or tap the customer's card
+    - Wait for approval
+    - Print card receipt if required
+  </Step>
+  
+  <Step title="Enter Approved Amount">
+    Type the exact amount approved by the card terminal.
+  </Step>
+  
+  <Step title="Complete Transaction">
+    Press **Enter** or click **Process Payment**.
+  </Step>
+</Steps>
+
+<Info>
+Karma POS records the payment but doesn't directly integrate with card terminals. You must process the card separately and enter the approved amount.
+</Info>
+
+## Processing Bank Transfers
+
+<Steps>
+  <Step title="Select Transfer Method">
+    Choose **🏦 Transferencia (Transfer)** from the payment type dropdown.
+  </Step>
+  
+  <Step title="Receive Transfer">
+    - Provide customer with your bank account details
+    - Wait for transfer confirmation
+    - Or accept transfer reference number if already sent
+  </Step>
+  
+  <Step title="Enter Transfer Amount">
+    Input the transferred amount in the payment field.
+  </Step>
+  
+  <Step title="Process Payment">
+    Complete the sale. You can add the transfer reference in notes if needed.
+  </Step>
+</Steps>
+
+## Processing Financed Payments
+
+For installment plans:
+
+<Steps>
+  <Step title="Select Financed Method">
+    Choose **📅 Financiado (Financed)** from the payment dropdown.
+  </Step>
+  
+  <Step title="Enter Total Financed Amount">
+    Input the amount to be financed.
+  </Step>
+  
+  <Step title="Select Number of Months">
+    A dropdown appears with options:
+    - 3 months
+    - 6 months
+    - 9 months
+    - 12 months
+    - 18 months
+    - 24 months
+    
+    Select the agreed-upon financing term.
+  </Step>
+  
+  <Step title="Complete Transaction">
+    Process the payment. The system records:
+    - Total amount
+    - Payment type (financed)
+    - Number of installments
+  </Step>
+</Steps>
+
+<Warning>
+Karma POS records the financing details but doesn't automatically create payment schedules or send reminders. Use a separate system for managing installment collections.
+</Warning>
+
+## Split Payments
+
+Handle payments across multiple methods:
+
+<Steps>
+  <Step title="Enter First Payment">
+    - Select payment method (e.g., Cash)
+    - Enter amount for first payment
+    - The **Difference** shows remaining balance
+  </Step>
+  
+  <Step title="Add Another Payment Method">
+    Click **Add Payment Method** button. A new payment row appears.
+  </Step>
+  
+  <Step title="Select Second Method">
+    - Choose the second payment type (e.g., Card)
+    - Enter the amount for this method
+  </Step>
+  
+  <Step title="Repeat if Needed">
+    Continue adding payment methods until:
+    ```
+    Total Payments = Sale Total
+    Difference = $0.00
+    ```
+  </Step>
+  
+  <Step title="Remove Payment Method (if needed)">
+    Click the **X** or remove icon next to any payment row to delete it.
+    
+    <Info>You must keep at least one payment method. The last remaining method cannot be removed.</Info>
+  </Step>
+  
+  <Step title="Process Combined Payment">
+    When total payments equal sale total, press **Enter** or click **Process Payment**.
+  </Step>
+</Steps>
+
+### Split Payment Examples
+
+#### Example 1: Cash + Card
+
+**Sale Total**: $150.00
+
+1. **Payment 1**: Cash - $100.00
+2. Click "Add Payment Method"
+3. **Payment 2**: Card - $50.00
+4. Total Payments = $150.00 ✓
+5. Process payment
+
+#### Example 2: Financed + Cash Down Payment
+
+**Sale Total**: $1,000.00
+
+1. **Payment 1**: Cash - $200.00 (down payment)
+2. Click "Add Payment Method"
+3. **Payment 2**: Financed - $800.00 (12 months)
+4. Total Payments = $1,000.00 ✓
+5. Process payment
+
+#### Example 3: Multiple Cards
+
+**Sale Total**: $300.00
+
+1. **Payment 1**: Card (Visa) - $150.00
+2. Click "Add Payment Method"
+3. **Payment 2**: Card (MasterCard) - $150.00
+4. Total Payments = $300.00 ✓
+5. Process payment
+
+## Applying Discounts
+
+### Product-Level Discounts
+
+Apply discounts to individual items:
+
+<Steps>
+  <Step title="View Current Discount">
+    Each cart item shows its current discount percentage.
+  </Step>
+  
+  <Step title="Edit Item Discount">
+    In the payment dialog:
+    - Find the product in the cart list
+    - Edit the discount percentage field
+    - Valid range: 0% to 100%
+  </Step>
+  
+  <Step title="Automatic Calculation">
+    The system recalculates:
+    - Item total
+    - Detail discount sum
+    - Subtotal
+    - Final total
+  </Step>
+</Steps>
+
+### General Discount
+
+Apply a percentage discount to the entire sale:
+
+<Steps>
+  <Step title="Locate General Discount Field">
+    Find the **General Discount** input in the payment summary section.
+  </Step>
+  
+  <Step title="Enter Percentage">
+    Type a discount percentage (e.g., 10 for 10% off).
+  </Step>
+  
+  <Step title="Automatic Recalculation">
+    The system updates:
+    ```
+    Base = Gross Subtotal - Detail Discounts
+    General Discount Amount = Base × (General Discount % ÷ 100)
+    Net Subtotal = Base - General Discount Amount
+    Tax = Net Subtotal × Tax Rate
+    Total = Net Subtotal + Tax
+    ```
+  </Step>
+</Steps>
+
+<Info>
+General discount applies to the subtotal after product-level discounts are applied, not the original gross amount.
+</Info>
+
+## Change Calculation
+
+Karma POS automatically calculates change:
+
+### How It Works
+
+```
+Difference = Total Payments - Sale Total
+```
+
+- **Difference > 0**: Give this amount as change
+- **Difference = 0**: Exact payment (no change)
+- **Difference < 0**: Customer still owes this amount
+
+### Example Calculations
+
+| Sale Total | Amount Received | Difference | Action |
+|------------|----------------|------------|--------|
+| $47.50 | $50.00 | +$2.50 | Give $2.50 change |
+| $123.00 | $123.00 | $0.00 | No change needed |
+| $85.25 | $100.00 | +$14.75 | Give $14.75 change |
+| $200.00 | $150.00 | -$50.00 | Need $50 more |
+
+<Warning>
+The system won't let you complete a payment if the difference is negative (payment incomplete).
+</Warning>
+
+## Adding Delivery Information
+
+For orders requiring delivery:
+
+<Steps>
+  <Step title="Toggle Delivery">
+    Enable the **Is Delivery** checkbox or toggle in the payment dialog.
+  </Step>
+  
+  <Step title="Enter Delivery Details">
+    Fill in the delivery form:
+    - **Address**: Street address
+    - **City**: City name
+    - **State**: State/province
+    - **ZIP Code**: Postal code
+    - **Phone**: Contact number
+    - **Notes**: Delivery instructions (optional)
+  </Step>
+  
+  <Step title="Save with Payment">
+    Delivery information is saved with the invoice when you process the payment.
+  </Step>
+</Steps>
+
+Delivery information is:
+- Printed on the invoice (if configured)
+- Stored with the sale record
+- Viewable in invoice history
+
+## Customer Selection During Payment
+
+You can select or change the customer in the payment dialog:
+
+<Steps>
+  <Step title="Open Customer Selector">
+    Click the customer dropdown or selection field.
+  </Step>
+  
+  <Step title="Search for Customer">
+    - Type customer name, NIT, or document number
+    - Select from filtered results
+  </Step>
+  
+  <Step title="Customer Information Updates">
+    Customer details (name, email, tax ID) automatically populate.
+  </Step>
+</Steps>
+
+<Tip>
+Select the customer before processing payment to ensure:
+- Proper invoice details
+- Customer purchase history tracking
+- Loyalty program application (if enabled)
+</Tip>
+
+## Completing the Payment
+
+<Steps>
+  <Step title="Verify All Details">
+    Before processing, confirm:
+    - ✓ All products and quantities are correct
+    - ✓ Discounts applied appropriately
+    - ✓ Customer selected (if applicable)
+    - ✓ Payment total equals sale total
+    - ✓ Payment methods are correct
+  </Step>
+  
+  <Step title="Process Payment">
+    Press **Enter** or click **Process Payment** button.
+  </Step>
+  
+  <Step title="Validation">
+    The system validates:
+    - Cart has products (not empty)
+    - Payment total matches sale total (within $0.01 tolerance)
+    - All required fields are filled
+  </Step>
+  
+  <Step title="Invoice Creation">
+    If validation passes:
+    - Invoice is created and saved
+    - Inventory is updated
+    - Stock reservations are finalized
+    - Invoice number is generated
+  </Step>
+  
+  <Step title="Success Confirmation">
+    You'll see:
+    - Success message with invoice number
+    - Invoice print dialog
+    - POS resets for next transaction
+  </Step>
+</Steps>
+
+## Keyboard Shortcuts for Payments
+
+| Key | Action | Context |
+|-----|--------|--------|
+| **F3** | Open payment dialog | From POS screen |
+| **Enter** | Process payment | In payment dialog (when complete) |
+| **Escape** | Close payment dialog | In payment dialog |
+| **F4** | Process sale | Anywhere (if payment complete) |
+| **Tab** | Navigate fields | In payment dialog |
+
+## Payment Validation Rules
+
+The system enforces these rules:
+
+<AccordionGroup>
+  <Accordion title="Cart Not Empty">
+    You cannot process a payment without products in the cart.
+    
+    **Error**: "Agrega productos antes de procesar"
+  </Accordion>
+  
+  <Accordion title="Payment Complete">
+    Total payments must equal or exceed sale total.
+    
+    **Error**: "Pago incompleto - Verifica los montos"
+    
+    **Tolerance**: System allows $0.01 difference for rounding.
+  </Accordion>
+  
+  <Accordion title="Valid Amounts">
+    Payment amounts must be:
+    - Greater than zero
+    - Numeric values
+    - Not null/empty
+  </Accordion>
+  
+  <Accordion title="Stock Available">
+    All products must have available stock (already validated when added to cart).
+  </Accordion>
+</AccordionGroup>
+
+## Handling Payment Errors
+
+<AccordionGroup>
+  <Accordion title="'Pago incompleto' Error">
+    **Cause**: Payment total doesn't match sale total
+    
+    **Solution**:
+    - Check each payment amount
+    - Use "Fill Exact Amount" for remaining balance
+    - Verify no math errors in split payments
+    - Check for negative amounts
+  </Accordion>
+  
+  <Accordion title="Cannot Click Process Payment Button">
+    **Cause**: Payment validation failed
+    
+    **Check**:
+    - Is cart empty?
+    - Do payments equal total?
+    - Are all payment amounts filled in?
+    - Is customer required for your business rules?
+  </Accordion>
+  
+  <Accordion title="Card Payment Not Recording">
+    **Cause**: Amount entered doesn't match approved amount
+    
+    **Solution**:
+    - Verify the card terminal approval amount
+    - Enter exact approved amount in payment field
+    - If void needed, process refund and restart
+  </Accordion>
+  
+  <Accordion title="Invoice Not Saving">
+    **Cause**: Backend error or connectivity issue
+    
+    **Solution**:
+    - Check internet connection
+    - Verify backend server is running
+    - Check browser console for errors
+    - Contact system administrator
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Speed" icon="bolt">
+    - Use keyboard shortcuts (F3, Enter)
+    - Use "Fill Exact Amount" button
+    - Keep payment types dropdown accessible
+    - Practice quick cash calculations
+  </Card>
+  
+  <Card title="Accuracy" icon="check-double">
+    - Always verify total before payment
+    - Count cash carefully
+    - Wait for card approval before entering amount
+    - Double-check split payment math
+  </Card>
+  
+  <Card title="Customer Service" icon="users">
+    - Announce total amount clearly
+    - Show payment screen to customer
+    - Count change out loud
+    - Offer receipt/invoice
+  </Card>
+  
+  <Card title="Documentation" icon="file-invoice">
+    - Always print/email invoices
+    - Keep card receipts with invoices
+    - Record transfer references in notes
+    - Document financed payment terms
+  </Card>
+</CardGroup>
+
+## Payment Workflows
+
+### Quick Cash Sale
+
+1. Products already in cart
+2. Press **F3**
+3. Payment defaults to Cash
+4. Enter amount received
+5. Note change amount
+6. Press **Enter**
+7. Give change and receipt
+
+### Card Payment
+
+1. Open payment dialog (F3)
+2. Select "Card" payment type
+3. Process card on terminal
+4. Enter approved amount
+5. Press **Enter**
+6. Print invoices
+
+### Split Payment (Cash + Card)
+
+1. Open payment (F3)
+2. Enter cash amount received
+3. Click "Add Payment Method"
+4. Select "Card" on second row
+5. Process card
+6. Enter card amount
+7. Verify total payments = sale total
+8. Press **Enter**
+
+### Financed with Down Payment
+
+1. Open payment (F3)
+2. Enter cash down payment amount
+3. Click "Add Payment Method"
+4. Select "Financed"
+5. Enter financed amount
+6. Select number of months
+7. Verify totals match
+8. Press **Enter**
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Making Sales" icon="shopping-cart" href="/guides/making-sales">
+    Full sales workflow including adding products
+  </Card>
+  
+  <Card title="Invoices" icon="file-invoice" href="/features/sales-invoicing">
+    View and manage completed invoices
+  </Card>
+  
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    Manage customer information
+  </Card>
+  
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    Analyze payment methods and sales
+  </Card>
+</CardGroup>

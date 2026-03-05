@@ -1,0 +1,550 @@
+---
+title: "WhatsApp Integration"
+description: "Multi-agent WhatsApp chat system with real-time messaging and conversation management"
+icon: "message"
+---
+
+## Overview
+
+Karma POS includes a powerful WhatsApp multi-agent chat system that enables your team to handle customer conversations in real-time. The system supports multiple agents, conversation assignment, media attachments, and real-time message synchronization using SignalR.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multi-Agent Support" icon="users">
+    Assign conversations to specific agents with locking mechanisms to prevent conflicts
+  </Card>
+  <Card title="Real-Time Sync" icon="bolt">
+    SignalR integration for instant message delivery and notifications
+  </Card>
+  <Card title="Media Handling" icon="image">
+    Support for images, documents, audio, video, and files up to 10MB
+  </Card>
+  <Card title="Conversation Status" icon="traffic-light">
+    Track conversations through open, in-progress, closed, and pending states
+  </Card>
+</CardGroup>
+
+## Architecture
+
+### Components
+
+The WhatsApp integration consists of three main components:
+
+**WhatsApp Multi-Agent Component** (`whatsapp-multiagent.component.ts:58`)
+- Main UI component for managing conversations
+- Handles message display, sending, and real-time updates
+- Manages agent assignments and conversation locking
+
+**WhatsApp Service** (`whatsapp.service.ts:10`)
+- HTTP API client for WhatsApp operations
+- Manages conversations, messages, and agent assignments
+
+**SignalR Service** (`signalr.service.ts:7`)
+- Real-time communication hub
+- Delivers instant notifications when new messages arrive
+- Manages phone number group subscriptions
+
+## How It Works
+
+### 1. Connection and Setup
+
+When the component initializes, it establishes a SignalR connection and loads phone numbers:
+
+```typescript
+ngOnInit(): void {
+  const session = this.authService.getSession();
+  
+  // Load settings and phone numbers
+  this.loadSettings();
+  this.loadPhoneNumbers();
+  
+  // Connect to SignalR for real-time updates
+  this.signalRService.connect();
+  
+  // Subscribe to new message events
+  this.signalRService.messageArrived$.subscribe(({ phoneNumberId }) => {
+    this.onNewMessage(phoneNumberId);
+  });
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:187`
+
+### 2. Phone Number Selection
+
+Support multiple WhatsApp phone numbers with seamless switching:
+
+```typescript
+onPhoneNumberChange() {
+  if (!this.selectedPhoneNumber) return;
+  
+  // Join the SignalR group for this phone number
+  this.signalRService.joinPhoneGroup(
+    this.selectedPhoneNumber.phoneNumberId
+  );
+  
+  // Load conversations for this phone number
+  this.loadConversations(
+    this.selectedPhoneNumber.phoneNumberId
+  );
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:264`
+
+### 3. Conversation Management
+
+#### Loading Conversations
+
+Conversations are loaded from the backend API:
+
+```typescript
+loadConversations(phoneNumberId?: string) {
+  this.whatsappService.getConversations(phoneNumberId).subscribe({
+    next: (res) => {
+      if (res.code === 0) {
+        this.conversations = res.data || [];
+        this.loadAgents();
+      }
+    }
+  });
+}
+```
+
+**API Endpoint:** `GET /api/WhatsApp/GetConversations/{phoneNumberId}`
+
+**Reference:** `whatsapp-multiagent.component.ts:522`
+
+#### Selecting a Conversation
+
+When an agent selects a conversation, it becomes locked to prevent multiple agents from responding:
+
+```typescript
+selectConversation(conv: Conversation): void {
+  // Lock conversation to current agent if not already locked
+  if (!conv.lockedByAgentId) {
+    conv.lockedByAgentId = this.currentAgentId;
+    conv.status = 'pending';
+  }
+  
+  this.activeConversation = conv;
+  this.loadMessages(conv.id);
+  this.shouldScroll = true;
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:297`
+
+### 4. Message Handling
+
+#### Loading Messages
+
+Messages for a conversation are loaded dynamically:
+
+```typescript
+loadMessages(conversationId: number) {
+  this.messages = [];
+  this.loadingMessages = true;
+  
+  this.whatsappService
+    .getMessagesByConversationId(conversationId)
+    .subscribe({
+      next: (res) => {
+        this.loadingMessages = false;
+        if (res.code === 0) {
+          this.messages = res.data || [];
+        }
+      }
+    });
+}
+```
+
+**API Endpoint:** `GET /api/WhatsApp/GetMessagesByConversationId/{conversationId}`
+
+**Reference:** `whatsapp-multiagent.component.ts:548`
+
+#### Sending Messages
+
+Send text messages and media files to customers:
+
+```typescript
+sendMessage() {
+  if (!this.messageText && this.selectedFiles.length === 0) return;
+  
+  const formData = new FormData();
+  formData.append('conversationId', 
+    this.activeConversation!.id.toString());
+  formData.append('senderUserId', this.userId.toString());
+  formData.append('companiaId', this.companiaId.toString());
+  formData.append('to', this.activeConversation!.clientPhone);
+  formData.append('phoneNumberId', 
+    this.selectedPhoneNumber!.phoneNumberId);
+  formData.append('accessToken', 
+    this.selectedPhoneNumber!.accessToken);
+  
+  if (this.messageText?.trim()) {
+    formData.append('messageText', this.messageText);
+  }
+  
+  // Attach multiple files
+  this.selectedFiles.forEach((file) => {
+    formData.append('files', file);
+  });
+  
+  this.whatsappService.sendMessage(formData).subscribe({
+    next: (res) => {
+      if (res.code === 0) {
+        this.messageText = '';
+        this.selectedFiles = [];
+        this.loadMessages(this.activeConversation!.id);
+      }
+    }
+  });
+}
+```
+
+**API Endpoint:** `POST /api/WhatsApp/SendMessage`
+
+**Reference:** `whatsapp-multiagent.component.ts:375`
+
+### 5. Real-Time Updates with SignalR
+
+The system uses SignalR for real-time message notifications:
+
+#### SignalR Connection
+
+```typescript
+async connect() {
+  this.hubConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${this.apiUrl}/hubs/whatsapp`, {
+      withCredentials: true,
+      transport: signalR.HttpTransportType.LongPolling
+    })
+    .withAutomaticReconnect()
+    .build();
+  
+  // Listen for new message events
+  this.hubConnection.on('HasNewMessages', (data) => {
+    this.messageArrived$.next(data);
+  });
+  
+  await this.hubConnection.start();
+}
+```
+
+**Reference:** `signalr.service.ts:16`
+
+#### Joining Phone Groups
+
+```typescript
+async joinPhoneGroup(phoneNumberId: string) {
+  await this.connect();
+  await this.hubConnection.invoke('JoinPhone', phoneNumberId);
+}
+```
+
+**Reference:** `signalr.service.ts:38`
+
+## Message Types
+
+The system supports multiple message types:
+
+<CodeGroup>
+```typescript Message Interface
+export interface Message {
+  id: number;
+  from: MessageFrom; // 'client' | 'agent' | 'system'
+  type: MessageType; // 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'AUDIO' | 'VIDEO' | 'TEMPLATE'
+  timestamp: string;
+  templateName?: string;
+  text?: string;
+  mediaUrl?: string;
+  fileName?: string;
+  mimeType?: string;
+  status?: string;
+  agentId?: number;
+}
+```
+
+```typescript Conversation Status
+export type ConversationStatus = 
+  | 'open'        // New conversation, unassigned
+  | 'in_progress' // Agent actively working on it
+  | 'closed'      // Conversation completed
+  | 'pending';    // Assigned but not yet in progress
+```
+</CodeGroup>
+
+**Reference:** `whatsappagents.ts:13`
+
+## Media Attachments
+
+### File Upload
+
+Handle file attachments with validation:
+
+```typescript
+onFilesSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files) return;
+  
+  const files = Array.from(input.files);
+  
+  for (const file of files) {
+    // Maximum 5 files per message
+    if (this.selectedFiles.length >= this.MAX_FILES) {
+      alert('Máximo 5 archivos por envío');
+      break;
+    }
+    
+    // Maximum 10MB per file
+    const sizeMB = file.size / 1024 / 1024;
+    if (sizeMB > this.MAX_FILE_SIZE_MB) {
+      alert(`El archivo ${file.name} supera los ${this.MAX_FILE_SIZE_MB}MB`);
+      continue;
+    }
+    
+    this.selectedFiles.push(file);
+    
+    // Generate preview for images
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      this.previewImages.push({ file, url });
+    }
+  }
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:590`
+
+### Supported File Types
+
+- **Images:** JPG, PNG, GIF
+- **Documents:** PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
+- **Media:** Audio and video files
+- **Archives:** ZIP files
+
+## Agent Management
+
+### Loading Agents
+
+Load agents assigned to a phone number:
+
+```typescript
+loadAgents(): void {
+  if (!this.selectedPhoneNumber) return;
+  
+  this.whatsappService
+    .getAgentsByPhoneNumberId(this.selectedPhoneNumber.phoneNumberId)
+    .subscribe({
+      next: (res: any) => {
+        this.agents = res.data || [];
+      }
+    });
+}
+```
+
+**API Endpoint:** `GET /api/WhatsApp/GetAgentsByPhoneNumberId/{phoneNumberId}`
+
+**Reference:** `whatsapp-multiagent.component.ts:282`
+
+### Assigning Agents
+
+Assign conversations to specific agents:
+
+```typescript
+assignAgent(payload: any) {
+  return this.http.post(
+    `${this.apiUrl}WhatsApp/AssignAgent`, 
+    payload
+  );
+}
+```
+
+**API Endpoint:** `POST /api/WhatsApp/AssignAgent`
+
+**Reference:** `whatsapp.service.ts:53`
+
+## Conversation Status Management
+
+Manage conversation lifecycle:
+
+```typescript
+updateStatus(conv: Conversation): void {
+  if (!conv) return;
+  
+  // Release lock when closing
+  if (conv.status === 'closed') {
+    conv.lockedByAgentId = null;
+  }
+  
+  conv.updatedAt = new Date().toISOString();
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:444`
+
+### Status Badges
+
+Display conversation status with color-coded badges:
+
+```typescript
+statusSeverity(status: ConversationStatus): 
+  'success' | 'info' | 'warn' | 'secondary' {
+  switch (status) {
+    case 'open':
+      return 'warn';
+    case 'pending':
+      return 'secondary';
+    case 'in_progress':
+      return 'info';
+    case 'closed':
+      return 'success';
+    default:
+      return 'secondary';
+  }
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:328`
+
+## Quick Replies
+
+Implement quick reply templates for common responses:
+
+```typescript
+quickRepliesList = [
+  'Hola 👋 ¿En qué puedo ayudarte?',
+  'Ya reviso tu caso, dame un momento por favor',
+  '¿Podrías enviarme un poco más de información?',
+  'Gracias por comunicarte con nosotros 😊'
+];
+
+selectQuickReply(text: string, popover: any) {
+  this.messageText = text;
+  popover.hide();
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:172`
+
+## 24-Hour Messaging Window
+
+Check if the 24-hour messaging window is still open:
+
+```typescript
+is24hWindowOpen(): boolean {
+  const lastClientMessage = [...this.messages]
+    .reverse()
+    .find((m) => m.from === 'client');
+  
+  if (!lastClientMessage) return false;
+  
+  const lastTime = new Date(lastClientMessage.timestamp).getTime();
+  const now = Date.now();
+  
+  const hoursDiff = (now - lastTime) / (1000 * 60 * 60);
+  return hoursDiff <= 24;
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:457`
+
+## Permissions
+
+The WhatsApp module respects role-based permissions:
+
+```typescript
+private applyPermissions(): void {
+  const moduleName = 'Chats';
+  const permission = this.permissions.find(
+    (p) => p.module === moduleName
+  );
+  
+  if (!permission) {
+    this.resetPermissions();
+    return;
+  }
+  
+  this.canView = permission.canView;
+  this.canCreate = permission.canCreate;
+  this.canEdit = permission.canEdit;
+  this.canDelete = permission.canDelete;
+  this.canExport = permission.canExport;
+}
+```
+
+**Reference:** `whatsapp-multiagent.component.ts:219`
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Conversation Locking">
+    Always check if a conversation is locked before allowing an agent to respond. The system automatically locks conversations when selected, but verify the lock status before performing actions.
+  </Accordion>
+  
+  <Accordion title="File Size Limits">
+    Enforce the 10MB file size limit and maximum 5 files per message to ensure reliable message delivery and prevent API errors.
+  </Accordion>
+  
+  <Accordion title="SignalR Reconnection">
+    Implement automatic reconnection logic with `.withAutomaticReconnect()` to handle network interruptions gracefully.
+  </Accordion>
+  
+  <Accordion title="Message Status Tracking">
+    Track message delivery status (sent, delivered, read) to provide feedback to agents about message reception.
+  </Accordion>
+</AccordionGroup>
+
+## API Reference
+
+### Key Endpoints
+
+<ResponseField name="GET /api/WhatsApp/GetPhoneNumbers" type="endpoint">
+  Retrieves all configured WhatsApp phone numbers
+</ResponseField>
+
+<ResponseField name="GET /api/WhatsApp/GetConversations/{phoneNumberId}" type="endpoint">
+  Retrieves all conversations for a specific phone number
+</ResponseField>
+
+<ResponseField name="GET /api/WhatsApp/GetMessagesByConversationId/{conversationId}" type="endpoint">
+  Retrieves all messages for a specific conversation
+</ResponseField>
+
+<ResponseField name="POST /api/WhatsApp/SendMessage" type="endpoint">
+  Sends a message with optional file attachments (FormData)
+</ResponseField>
+
+<ResponseField name="GET /api/WhatsApp/GetAgentsByPhoneNumberId/{phoneNumberId}" type="endpoint">
+  Retrieves agents assigned to a phone number
+</ResponseField>
+
+<ResponseField name="POST /api/WhatsApp/AssignAgent" type="endpoint">
+  Assigns a conversation to an agent
+</ResponseField>
+
+### SignalR Hub
+
+<ResponseField name="/hubs/whatsapp" type="hub">
+  Real-time messaging hub
+  
+  **Events:**
+  - `HasNewMessages` - Triggered when new messages arrive
+  
+  **Methods:**
+  - `JoinPhone(phoneNumberId)` - Subscribe to phone number updates
+  - `LeavePhone(phoneNumberId)` - Unsubscribe from phone number updates
+</ResponseField>
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    Manage customer profiles and conversation history
+  </Card>
+  <Card title="Permissions" icon="shield" href="/admin/user-permissions">
+    Configure role-based access control for chat features
+  </Card>
+</CardGroup>

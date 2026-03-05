@@ -1,0 +1,422 @@
+---
+title: User Permissions
+description: Manage role-based access control, user accounts, and permission assignments in Karma POS
+icon: shield-halved
+---
+
+## Overview
+
+The User Permissions module provides comprehensive role-based access control (RBAC) for your Karma POS system. Manage users, create roles, and assign granular permissions across all system modules.
+
+<Info>
+  The permissions system uses a module-based approach where each role can have different access levels (View, Create, Edit, Delete, Export) for each system module.
+</Info>
+
+## Permission Structure
+
+Each permission consists of five granular actions:
+
+<CardGroup cols={3}>
+  <Card title="canView" icon="eye">
+    View data in the module
+  </Card>
+  <Card title="canCreate" icon="plus">
+    Create new records
+  </Card>
+  <Card title="canEdit" icon="pen">
+    Edit existing records
+  </Card>
+  <Card title="canDelete" icon="trash">
+    Delete records
+  </Card>
+  <Card title="canExport" icon="download">
+    Export data from the module
+  </Card>
+</CardGroup>
+
+<Warning>
+  The `canView` permission is required to enable any other permissions. If `canView` is disabled, all other permissions are automatically disabled.
+</Warning>
+
+## Managing Roles
+
+### Creating a Role
+
+<Steps>
+  <Step title="Open Roles Tab">
+    Navigate to the "Roles y Permisos" tab in the permissions module.
+  </Step>
+  
+  <Step title="Click 'Nuevo Rol'">
+    Opens the role configuration dialog.
+  </Step>
+  
+  <Step title="Configure Role Details">
+    <ParamField path="name" type="string" required>
+      Name of the role (e.g., "Administrator", "Cashier", "Manager")
+    </ParamField>
+    
+    <ParamField path="description" type="string" required>
+      Brief description of the role's purpose
+    </ParamField>
+    
+    <ParamField path="isActive" type="boolean" default="true">
+      Whether the role is currently active
+    </ParamField>
+  </Step>
+  
+  <Step title="Set Module Permissions">
+    For each system module, toggle the permissions you want to grant:
+    
+    ```typescript
+    permissions: [
+      {
+        moduleId: 1,
+        module: 'Compañías',
+        canView: true,
+        canCreate: true,
+        canEdit: true,
+        canDelete: false,
+        canExport: true
+      },
+      // ... more modules
+    ]
+    ```
+  </Step>
+  
+  <Step title="Save Role">
+    Click "Guardar Rol" to create the role and its associated permissions.
+  </Step>
+</Steps>
+
+### Editing Role Permissions
+
+1. Click the settings icon (cog) on a role card
+2. Modify the role name, description, or permissions
+3. Click "Guardar Rol" to save changes
+
+<Note>
+  When editing permissions, if you disable `canView`, all dependent permissions (Create, Edit, Delete, Export) are automatically disabled.
+</Note>
+
+### Deleting a Role
+
+To delete a role:
+
+```typescript
+masterService.deleteRole(roleId).subscribe({
+  next: (res) => {
+    if (res.code === 0) {
+      // Role deleted successfully
+    }
+  }
+});
+```
+
+<Warning>
+  Deleting a role may affect users assigned to that role. Ensure users are reassigned to another role before deletion.
+</Warning>
+
+## Managing Users
+
+### Creating a User
+
+<Steps>
+  <Step title="Open User Dialog">
+    Click "Nuevo Usuario" from the main permissions page.
+  </Step>
+  
+  <Step title="Enter Identity Information">
+    <ParamField path="firstName" type="string" required>
+      First name of the user
+    </ParamField>
+    
+    <ParamField path="middleName" type="string">
+      Middle name (optional)
+    </ParamField>
+    
+    <ParamField path="lastName" type="string" required>
+      Last name (first surname)
+    </ParamField>
+    
+    <ParamField path="secondLastName" type="string">
+      Second last name (optional)
+    </ParamField>
+  </Step>
+  
+  <Step title="Set Credentials">
+    <ParamField path="email" type="string" required>
+      Email address - used as login username
+    </ParamField>
+    
+    <ParamField path="password" type="string" required>
+      Password for system access - supports strength validation
+    </ParamField>
+  </Step>
+  
+  <Step title="Assign Role">
+    Select a role from the dropdown. Only active roles are displayed.
+    
+    ```typescript
+    activeRolesForDropdown = roles.filter(r => r.isActive);
+    ```
+  </Step>
+  
+  <Step title="Configure User Status">
+    <ParamField path="session" type="boolean" default="false">
+      Whether the user can currently log in
+    </ParamField>
+    
+    <ParamField path="status" type="boolean" default="true">
+      Overall user account status (Active/Inactive)
+    </ParamField>
+  </Step>
+  
+  <Step title="Save User">
+    Click "Guardar Usuario" to create the user account.
+  </Step>
+</Steps>
+
+### User Data Model
+
+```typescript
+interface User {
+  id: number;
+  companiaId: number;
+  rolId: number;
+  rol: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  secondLastName?: string;
+  email: string;
+  password: string;
+  session: boolean;  // Can log in
+  status: boolean;   // Account is active
+}
+```
+
+### Editing Users
+
+1. Locate the user in the "Usuarios del Sistema" table
+2. Click the edit icon (pencil) in the "Gestión" column
+3. Modify user details or change their assigned role
+4. Click "Guardar Usuario" to save changes
+
+### User Status Management
+
+<CardGroup cols={2}>
+  <Card title="Session Control" icon="right-to-bracket">
+    **Session Toggle:** Enable or disable user's ability to log in without deleting their account.
+  </Card>
+  <Card title="Account Status" icon="circle-check">
+    **Status Toggle:** Activate or deactivate the user account. Inactive users cannot access the system.
+  </Card>
+</CardGroup>
+
+## Permission Retrieval
+
+When a user logs in, their permissions are loaded from the backend:
+
+```typescript
+const { userId, companiaId } = authService.getSession();
+
+loginService.getPermissions(userId, companiaId).subscribe({
+  next: (permissions) => {
+    // Apply permissions for current module
+    const moduleName = 'Permisos';
+    const permission = permissions.data.find(
+      p => p.module === moduleName
+    );
+    
+    if (permission) {
+      this.canView = permission.canView;
+      this.canCreate = permission.canCreate;
+      this.canEdit = permission.canEdit;
+      this.canDelete = permission.canDelete;
+      this.canExport = permission.canExport;
+    }
+  }
+});
+```
+
+## Permission Application
+
+Each module in Karma POS checks permissions on initialization:
+
+<CodeGroup>
+```typescript Module Permission Check
+private applyPermissions(): void {
+  const moduleName = 'Permisos';
+  
+  const permission = this.permissions.find(
+    p => p.module === moduleName
+  );
+  
+  if (!permission) {
+    this.resetPermissions();
+    return;
+  }
+  
+  this.canView = permission.canView;
+  this.canCreate = permission.canCreate;
+  this.canEdit = permission.canEdit;
+  this.canDelete = permission.canDelete;
+  this.canExport = permission.canExport;
+}
+```
+
+```typescript Permission Reset
+private resetPermissions(): void {
+  this.canView = false;
+  this.canCreate = false;
+  this.canEdit = false;
+  this.canDelete = false;
+  this.canExport = false;
+}
+```
+</CodeGroup>
+
+## UI Permission Controls
+
+Permissions control UI element visibility:
+
+```html
+<!-- Button only visible if user can create -->
+<button 
+  *ngIf="canCreate"
+  (click)="openNewDialog()">
+  Nueva Compañía
+</button>
+
+<!-- Edit button only visible if user can edit -->
+<button 
+  *ngIf="canEdit"
+  (click)="editCompany(company)">
+  Editar
+</button>
+```
+
+## System Modules
+
+Permissions can be assigned for these modules:
+
+<AccordionGroup>
+  <Accordion title="Core Modules">
+    - **Compañías** - Company management
+    - **Permisos** - User and role management
+    - **Bodegas** - Warehouse management
+    - **Categorías** - Category management
+    - **Configuración** - System settings
+  </Accordion>
+  
+  <Accordion title="Operations Modules">
+    - **Productos** - Product catalog
+    - **Ventas** - Sales transactions
+    - **Inventario** - Inventory control
+    - **Clientes** - Customer management
+    - **Proveedores** - Supplier management
+  </Accordion>
+  
+  <Accordion title="Reporting Modules">
+    - **Reportes** - Report generation
+    - **Estadísticas** - Analytics and statistics
+    - **Auditoría** - Audit logs
+  </Accordion>
+</AccordionGroup>
+
+## Role Initialization
+
+When creating a new role, permissions are initialized for all modules:
+
+```typescript
+private initializeNewRole(): Role {
+  return {
+    id: 0,
+    name: '',
+    description: '',
+    permissions: this.modules.map(m => ({
+      moduleId: m.id,
+      module: m.name,
+      canView: false,
+      canCreate: false,
+      canEdit: false,
+      canDelete: false,
+      canExport: false
+    })),
+    isActive: true,
+    userCount: 0,
+    createdAt: new Date().toISOString()
+  };
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use the Principle of Least Privilege">
+    Grant users only the permissions they need to perform their job functions. Start with minimal permissions and add as needed.
+  </Accordion>
+  
+  <Accordion title="Create Role-Based Profiles">
+    Instead of customizing permissions per user, create standardized roles (e.g., "Cashier", "Manager", "Admin") and assign users to roles.
+  </Accordion>
+  
+  <Accordion title="Regular Permission Audits">
+    Periodically review user permissions and remove unnecessary access, especially for users who change positions.
+  </Accordion>
+  
+  <Accordion title="Separate Admin Access">
+    Create a dedicated administrator role with full permissions, and limit the number of users with admin access.
+  </Accordion>
+  
+  <Accordion title="Use Session Control for Temporary Restrictions">
+    When you need to temporarily restrict access, use the session toggle instead of deleting the user account.
+  </Accordion>
+  
+  <Accordion title="Document Role Purposes">
+    Use the description field to clearly explain what each role is intended for and who should be assigned to it.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="User cannot see certain modules">
+    **Issue:** User reports missing modules or features.
+    
+    **Solution:** 
+    1. Check the user's assigned role
+    2. Verify the role has `canView` enabled for the module
+    3. Ensure the user's `status` and `session` flags are both enabled
+  </Accordion>
+  
+  <Accordion title="Cannot save role without name and description">
+    **Error:** "Debe completar los campos obligatorios."
+    
+    **Solution:** Both the role name and description are required fields. Provide values for both before saving.
+  </Accordion>
+  
+  <Accordion title="Permission changes not taking effect">
+    **Issue:** User permissions haven't updated after role modification.
+    
+    **Solution:** Users need to log out and log back in for permission changes to take effect. This reloads their permission set from the database.
+  </Accordion>
+  
+  <Accordion title="Cannot enable Create/Edit/Delete without View">
+    **Behavior:** Other permission toggles are disabled.
+    
+    **Explanation:** This is by design. The `canView` permission must be enabled first, as it's a prerequisite for all other permissions.
+  </Accordion>
+</AccordionGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Company Settings" icon="building" href="/admin/company-settings">
+    Configure company information and business details
+  </Card>
+  <Card title="User Authentication" icon="key" href="/admin/user-permissions">
+    Learn about login and session management
+  </Card>
+</CardGroup>

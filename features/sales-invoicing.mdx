@@ -1,0 +1,504 @@
+---
+title: Sales & Invoicing
+description: View, manage, and process sales invoices with detailed reporting
+icon: file-invoice
+---
+
+## Overview
+
+The Karma POS Sales & Invoicing system provides comprehensive invoice management, including viewing invoice history, generating PDF receipts, filtering by various criteria, and canceling invoices when necessary.
+
+## Invoice Structure
+
+### Invoice Data Model
+
+```typescript
+interface IInvoiceClients {
+    id: number;
+    invoice_Number?: string;
+    client_Name?: string;
+    client_Nit?: string;
+    subtotal?: number;
+    subtotal_Bruto?: number;
+    descuento_General?: number;
+    total_Iva?: number;
+    invoice_Total?: number;
+    invoice_Status?: string;
+    created_At?: Date;
+    
+    // Detail arrays
+    items?: InvoiceItem[];
+    customer?: InvoiceCustomer;
+    payments?: InvoicePayment[];
+    delivery?: InvoiceDelivery;
+}
+```
+
+### Invoice Components
+
+<CardGroup cols={2}>
+  <Card title="Header Information" icon="file-lines">
+    Invoice number, date, customer details, and status
+  </Card>
+  <Card title="Line Items" icon="list">
+    Products sold with quantities, prices, and discounts
+  </Card>
+  <Card title="Payment Methods" icon="credit-card">
+    How the customer paid (cash, card, transfer, etc.)
+  </Card>
+  <Card title="Delivery Info" icon="truck">
+    Optional delivery address and instructions
+  </Card>
+</CardGroup>
+
+## Invoice Status
+
+Invoices can have three statuses:
+
+```typescript
+statusOptions = [
+    { label: 'APROBADA', value: 'APROBADA' },
+    { label: 'RECHAZADA', value: 'RECHAZADA' },
+    { label: 'ANULADA', value: 'ANULADA' }
+];
+```
+
+- **APROBADA**: Successfully processed invoice
+- **RECHAZADA**: Rejected invoice (payment failure, etc.)
+- **ANULADA**: Canceled/voided invoice
+
+## Loading Invoices
+
+### Fetch Invoice List
+
+Load invoices for a date range:
+
+```typescript
+loadInvoices() {
+    let companyId = 1;
+    this.invoices = [];
+    
+    this.posService.getInvoices(
+        this.startDate, 
+        this.endDate, 
+        companyId
+    ).subscribe({
+        next: (res) => {
+            this.invoices = res.data || [];
+            this.filteredInvoices = [...this.invoices];
+        },
+        error: () => this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar las facturas.'
+        })
+    });
+}
+```
+
+<Note>
+  Invoices are loaded based on the selected start and end dates, allowing for flexible reporting periods.
+</Note>
+
+### Date Range Selection
+
+```typescript
+startDate: Date = new Date(new Date().setHours(0, 0, 0, 0));
+endDate: Date = new Date(new Date().setHours(0, 0, 0, 0));
+```
+
+## Viewing Invoice Details
+
+### Load Full Invoice
+
+```typescript
+viewInvoice(invoice: IInvoiceClients) {
+    this.selectedInvoice = {} as IInvoiceClients;
+    let companyId = 1;
+    
+    this.posService.getInvoiceDetail(
+        invoice.id, 
+        companyId
+    ).subscribe({
+        next: (res) => {
+            this.selectedInvoice = res.data;
+            this.showInvoiceDialog = true;
+        },
+        error: () => this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar las facturas.'
+        })
+    });
+}
+```
+
+### Invoice Items
+
+```typescript
+interface InvoiceItem {
+    product_Id?: number;
+    reference?: string;
+    extension1?: string;
+    extension2?: string;
+    product_Sku?: string;
+    barcode?: string;
+    name?: string;
+    quantity?: number;
+    price?: number;
+    discount?: number;
+    discount_Value?: number;
+    subtotal?: number;
+    total?: number;
+}
+```
+
+## Filtering & Search
+
+### Apply Filters
+
+```typescript
+applyLocalFilters() {
+    this.filteredInvoices = this.invoices.filter((inv) => {
+        const matchText = !this.filterClient ||
+            inv.client_Name?.toLowerCase().includes(
+                this.filterClient.toLowerCase()
+            ) ||
+            inv.invoice_Number?.toString().includes(this.filterClient);
+
+        const matchStatus = !this.filterStatus || 
+            inv.invoice_Status === this.filterStatus;
+
+        return matchText && matchStatus;
+    });
+}
+```
+
+**Filter Options:**
+- Client name or document
+- Invoice number
+- Invoice status (Approved/Rejected/Canceled)
+- Date range
+
+### Clear Filters
+
+```typescript
+clearFilters() {
+    this.filterClient = '';
+    this.filterDate = null;
+    this.filterStatus = null;
+    this.filteredInvoices = [...this.invoices];
+}
+```
+
+## Invoice Statistics
+
+### Calculate Sales Totals
+
+```typescript
+getStats() {
+    const stats = {
+        totalAprobada: 0,
+        countAprobada: 0,
+        totalAnulada: 0,
+        countAnulada: 0,
+        totalRechazada: 0,
+        countRechazada: 0
+    };
+
+    this.filteredInvoices.forEach((inv) => {
+        const total = inv.invoice_Total || 0;
+        const status = inv.invoice_Status?.toUpperCase();
+
+        if (status === 'APROBADA') {
+            stats.totalAprobada += total;
+            stats.countAprobada++;
+        } else if (status === 'ANULADA') {
+            stats.totalAnulada += total;
+            stats.countAnulada++;
+        } else if (status === 'RECHAZADA') {
+            stats.totalRechazada += total;
+            stats.countRechazada++;
+        }
+    });
+
+    return stats;
+}
+```
+
+<Info>
+  Statistics update automatically based on the current filter criteria, providing real-time insights.
+</Info>
+
+## Canceling Invoices
+
+### Cancel/Void Invoice
+
+```typescript
+cancelInvoice() {
+    let companyId = 1;
+    
+    this.confirmationService.confirm({
+        message: `¿Está seguro de anular la factura 
+                  ${this.selectedInvoice?.invoice_Number}?`,
+        header: 'Confirmación',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+            this.posService.cancelInvoice(
+                this.selectedInvoice?.id, 
+                companyId
+            ).subscribe({
+                next: (res) => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Éxito',
+                        detail: `Factura ${this.selectedInvoice?.invoice_Number} 
+                                 anulada correctamente`
+                    });
+                    this.loadInvoices();
+                },
+                error: (err) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: `No se pudo anular la factura 
+                                 ${this.selectedInvoice?.invoice_Number}`
+                    });
+                }
+            });
+        },
+        reject: () => {
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Cancelado',
+                detail: 'Acción de anular cancelada'
+            });
+        }
+    });
+}
+```
+
+<Warning>
+  Canceling an invoice changes its status to "ANULADA" and may affect inventory stock levels. Ensure this action is necessary before proceeding.
+</Warning>
+
+## PDF Generation
+
+### Generate Invoice PDF
+
+Two PDF formats are supported:
+
+1. **Standard Invoice** (A4 format)
+2. **POS Receipt** (Thermal printer format)
+
+```typescript
+handleDownload() {
+    let detailDiscount = this.selectedInvoice?.items?.reduce(
+        (sum, item) => sum + (item.discount_Value || 0), 0
+    ) || 0;
+    
+    this.invoicePdfService.generate({
+        invoiceNumber: this.selectedInvoice?.invoice_Number || '',
+        date: this.selectedInvoice?.created_At || new Date(),
+        customer: this.selectedInvoice?.customer || null,
+        items: this.selectedInvoice?.items || [],
+        subtotal: this.selectedInvoice?.subtotal || 0,
+        detailDiscount: this.selectedInvoice?.items?.reduce(
+            (acc, item) => acc + (item.discount_Value ?? 0), 0
+        ) ?? 0,
+        generalDiscount: this.selectedInvoice?.descuento_General || 0,
+        grossSubtotal: this.selectedInvoice?.subtotal_Bruto || 0,
+        discount: detailDiscount + 
+            (((this.selectedInvoice?.subtotal || 0) - detailDiscount) * 
+             (this.selectedInvoice?.descuento_General || 0)) / 100,
+        total: this.selectedInvoice?.invoice_Total || 0,
+        deliveryInfo: this.selectedInvoice?.delivery,
+        paymentMethods: this.selectedInvoice?.payments || [],
+        session: this.selectedCompany
+    });
+}
+```
+
+### POS Thermal Receipt
+
+```typescript
+handlePrint(): void {
+    this.invoicePdfService.generatePOS({
+        // Same parameters as handleDownload
+    });
+}
+```
+
+<Tip>
+  Use `handleDownload()` for standard PDF invoices and `handlePrint()` for thermal receipt printing.
+</Tip>
+
+## Payment Information
+
+### Payment Methods
+
+```typescript
+interface InvoicePayment {
+    type?: string;        // 'cash', 'card', 'transfer', 'financed'
+    amount?: number;      // Payment amount
+    months?: number;      // For financed payments
+}
+```
+
+### Display Payments
+
+Each invoice can have multiple payment methods:
+
+```typescript
+// In template
+<div *ngFor="let payment of selectedInvoice?.payments">
+    <span>{{ payment.type }}: {{ formatCurrency(payment.amount) }}</span>
+    <span *ngIf="payment.months"> ({{ payment.months }} meses)</span>
+</div>
+```
+
+## Delivery Information
+
+### Delivery Data
+
+```typescript
+interface InvoiceDelivery {
+    address?: string;
+    city?: string;
+    state?: string;
+    zip_Code?: string;
+    phone?: string;
+    notes?: string;
+}
+```
+
+Delivery information is optional and only included when applicable.
+
+## Discount Calculations
+
+### Total Discounts
+
+Calculate combined discounts:
+
+```typescript
+getDiscounts() {
+    const general = this.selectedInvoice?.descuento_General ?? 0;
+    const itemsDiscount = this.selectedInvoice?.items?.reduce(
+        (acc, item) => acc + (item.discount_Value ?? 0), 0
+    ) ?? 0;
+
+    return general + itemsDiscount;
+}
+```
+
+**Discount Types:**
+- **Detail Discount**: Per-item discounts
+- **General Discount**: Overall percentage discount applied to subtotal
+
+## Currency Formatting
+
+### Format Currency Values
+
+```typescript
+formatCurrency(value: number): string {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    }).format(value);
+}
+```
+
+<Note>
+  All monetary values are formatted according to Colombian Peso (COP) standards.
+</Note>
+
+## Permissions
+
+<AccordionGroup>
+  <Accordion title="canView">
+    View invoice list and details
+  </Accordion>
+  <Accordion title="canCreate">
+    Create new invoices (typically through POS)
+  </Accordion>
+  <Accordion title="canEdit">
+    Modify invoice details
+  </Accordion>
+  <Accordion title="canDelete">
+    Cancel/void invoices
+  </Accordion>
+  <Accordion title="canExport">
+    Export invoice data and generate PDFs
+  </Accordion>
+</AccordionGroup>
+
+## API Endpoints
+
+### Get Invoices
+
+```typescript
+getInvoices(
+    startDate: Date, 
+    endDate: Date, 
+    companyId: number
+): Observable<ApiResponse<IInvoiceClients[]>> {
+    return this.http.get<ApiResponse<IInvoiceClients[]>>(
+        `${this.apiUrl}pos/GetInvoicesAll/
+         ${startDate.toISOString()}/
+         ${endDate.toISOString()}/
+         ${companyId}`
+    );
+}
+```
+
+### Get Invoice Detail
+
+```typescript
+getInvoiceDetail(
+    invoiceId: number, 
+    companyId: number
+): Observable<ApiResponse<IInvoiceClients>> {
+    return this.http.get<ApiResponse<IInvoiceClients>>(
+        `${this.apiUrl}pos/GetInvoiceDetail/${invoiceId}/${companyId}`
+    );
+}
+```
+
+### Cancel Invoice
+
+```typescript
+cancelInvoice(
+    invoiceId?: number, 
+    companyId?: number
+): Observable<ApiResponse<IInvoiceClients>> {
+    return this.http.get<ApiResponse<IInvoiceClients>>(
+        `${this.apiUrl}pos/CancelInvoice/${invoiceId}/${companyId}`
+    );
+}
+```
+
+## Component Location
+
+<Info>
+  **Source**: `src/app/components/pages/invoices/invoices.component.ts`  
+  **Service**: `src/app/components/services/pos.service.ts`  
+  **PDF Service**: `src/app/components/services/invoice-pdf.service.ts`
+</Info>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="POS System" icon="cash-register" href="/features/pos-system">
+    Create invoices through point of sale
+  </Card>
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    View customer purchase history
+  </Card>
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    Analyze sales trends and performance
+  </Card>
+  <Card title="Financing" icon="credit-card" href="/features/financing">
+    Manage financed invoice payments
+  </Card>
+</CardGroup>

@@ -1,0 +1,389 @@
+---
+title: Making Sales
+description: Complete guide to processing sales transactions in Karma POS
+icon: shopping-cart
+---
+
+## Overview
+
+The Point of Sale (POS) interface is the heart of Karma POS, allowing you to quickly process customer transactions with barcode scanning, product search, and flexible payment options.
+
+## Opening the POS Interface
+
+Navigate to the POS module from your dashboard. The interface opens with:
+- An empty cart ready for items
+- Barcode input field (automatically focused)
+- Product search options
+- Customer selector
+
+<Tip>
+The barcode input field is always auto-focused after actions, so you can scan items continuously without clicking.
+</Tip>
+
+## Adding Products to Cart
+
+You have multiple ways to add products to a sale:
+
+<Steps>
+  <Step title="Scan Barcode">
+    Simply scan the product barcode with your scanner. The system automatically:
+    - Searches for the product by barcode
+    - Adds it to the cart
+    - Reserves stock if inventory management is enabled
+    - Refocuses the input for the next scan
+  </Step>
+  
+  <Step title="Manual Barcode Entry">
+    Type the barcode in the input field and press Enter.
+  </Step>
+  
+  <Step title="Search by Product Code or Name">
+    - Press **F2** to open the search dialog
+    - Enter product code or name
+    - Select the product from results
+    - Click to add to cart
+  </Step>
+  
+  <Step title="Product Code Search">
+    Use the product code field to search by SKU or product name. The system performs case-insensitive matching.
+  </Step>
+</Steps>
+
+## Managing Cart Items
+
+### Adjusting Quantities
+
+<Steps>
+  <Step title="Increase Quantity">
+    - Modify the quantity field for any cart item
+    - The system validates stock availability in real-time
+    - Stock is automatically reserved
+  </Step>
+  
+  <Step title="Decrease Quantity">
+    - Reduce the quantity value
+    - Reserved stock is released back to inventory
+    - Items with zero quantity are automatically removed
+  </Step>
+</Steps>
+
+<Warning>
+If stock is insufficient, you'll see a warning: "Solo hay X unidades más disponibles" and the quantity will revert to the previous valid amount.
+</Warning>
+
+### Applying Discounts
+
+- **Product-level discounts**: Products with `hasDiscount` enabled automatically show discounted prices
+- **Manual discounts**: Edit discount percentage in the payment dialog
+- **General discount**: Apply a percentage discount to the entire cart in the payment screen
+
+### Removing Products
+
+Click the remove icon next to any product. Reserved stock is immediately released.
+
+## Selecting a Customer
+
+<Steps>
+  <Step title="Open Customer Selector">
+    Click the customer selection dropdown or button in the POS interface.
+  </Step>
+  
+  <Step title="Choose Customer">
+    - Search by name, NIT, or document number
+    - Select from the list
+    - Customer information populates automatically
+  </Step>
+  
+  <Step title="Default Customer">
+    If no customer is selected, the sale processes as "Consumidor Final" (final consumer).
+  </Step>
+</Steps>
+
+## Processing the Payment
+
+<Steps>
+  <Step title="Open Payment Dialog">
+    Press **F3** or click the payment button when you're ready to checkout.
+  </Step>
+  
+  <Step title="Review Sale Details">
+    The payment dialog shows:
+    - All cart items with quantities and prices
+    - Gross subtotal (before discounts)
+    - Item-level discounts
+    - General discount field
+    - Tax calculation (if configured)
+    - Final total
+  </Step>
+  
+  <Step title="Enter Payment Information">
+    - Select payment method (cash, card, transfer, financed, other)
+    - Enter payment amount
+    - For financed payments, specify number of months
+    - Use "Fill Exact Amount" to auto-complete remaining balance
+  </Step>
+  
+  <Step title="Split Payments (Optional)">
+    Click "Add Payment Method" to split payment across multiple methods:
+    - Cash + Card
+    - Multiple cards
+    - Any combination of available methods
+  </Step>
+  
+  <Step title="Add Delivery Information (Optional)">
+    Toggle "Is Delivery" and fill in:
+    - Address
+    - City and State
+    - ZIP code
+    - Phone number
+    - Delivery notes
+  </Step>
+  
+  <Step title="Complete the Sale">
+    Press **Enter** or click "Process Payment" when total payments equal the sale total.
+  </Step>
+</Steps>
+
+## Completing the Sale
+
+After processing payment:
+
+<Steps>
+  <Step title="Invoice Generation">
+    The system automatically:
+    - Generates a unique invoice number (e.g., FV-001)
+    - Updates inventory levels
+    - Records the transaction
+    - Stores customer purchase history
+  </Step>
+  
+  <Step title="Print Invoice">
+    The invoice dialog appears with:
+    - Complete sale details
+    - Print button
+    - Option to print multiple copies (configured in settings)
+  </Step>
+  
+  <Step title="Next Transaction">
+    The POS automatically:
+    - Clears the completed cart
+    - Creates a new invoice if no other carts exist
+    - Refocuses the barcode input
+    - Keeps you ready for the next customer
+  </Step>
+</Steps>
+
+## Multi-Invoice Management
+
+Handle multiple customers simultaneously:
+
+<Steps>
+  <Step title="Create New Invoice">
+    Press **F5** to create a new invoice/cart while keeping the current one.
+  </Step>
+  
+  <Step title="Switch Between Invoices">
+    Click on any invoice tab to switch between customers.
+  </Step>
+  
+  <Step title="Process Independently">
+    Each invoice maintains its own:
+    - Product list
+    - Customer selection
+    - Payment methods
+    - Stock reservations
+  </Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+Speed up your workflow with these shortcuts:
+
+| Key | Action |
+|-----|--------|
+| **F2** | Open product search dialog |
+| **F3** | Open payment dialog |
+| **F4** | Process sale (when payment complete) |
+| **F5** | Create new invoice |
+| **Enter** | Confirm payment (in payment dialog) |
+| **Escape** | Close current dialog |
+
+## Stock Management During Sales
+
+### Real-Time Reservation
+
+When you add products with `manageStock` enabled:
+
+1. **Stock Validation**: System checks available stock across warehouses
+2. **Reservation**: Stock is temporarily reserved with a unique `facturaTempId`
+3. **Prevention**: Other users cannot sell reserved stock
+4. **Release**: Stock is released if:
+   - Quantity is reduced
+   - Product is removed from cart
+   - Invoice is cleared or cancelled
+
+### Products Without Stock Management
+
+Products with `manageStock: false` can be added without quantity limits.
+
+## Handling Errors
+
+<AccordionGroup>
+  <Accordion title="Product Not Found">
+    - Verify the barcode is correct
+    - Check if product exists in inventory
+    - Ensure product is active
+    - Try searching by name or code
+  </Accordion>
+  
+  <Accordion title="Insufficient Stock">
+    - Warning displays available quantity
+    - Reduce cart quantity to available amount
+    - Check other warehouses for stock
+    - Consider accepting a backorder (if enabled)
+  </Accordion>
+  
+  <Accordion title="Payment Incomplete">
+    Error: "Verifica los montos"
+    - Ensure payment total equals sale total
+    - Use "Fill Exact Amount" button
+    - Check for calculation errors in split payments
+  </Accordion>
+  
+  <Accordion title="No Products in Cart">
+    Warning: "Agrega productos antes de procesar"
+    - Add at least one product before attempting payment
+  </Accordion>
+</AccordionGroup>
+
+## Clearing an Invoice
+
+To cancel a sale in progress:
+
+<Steps>
+  <Step title="Click Clear/Cancel">
+    Use the clear button on the invoice.
+  </Step>
+  
+  <Step title="Stock Release">
+    All reserved stock is released back to inventory via `cancelInvoiceAll()` API call.
+  </Step>
+  
+  <Step title="Invoice Removal">
+    The invoice is removed from the active list. If it was the last invoice, a new empty one is created.
+  </Step>
+</Steps>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Speed" icon="bolt">
+    - Keep barcode scanner connected and ready
+    - Use keyboard shortcuts
+    - Learn common product codes
+    - Pre-configure payment methods
+  </Card>
+  
+  <Card title="Accuracy" icon="check">
+    - Always verify quantities
+    - Confirm customer before processing
+    - Review totals before payment
+    - Print invoices for records
+  </Card>
+  
+  <Card title="Customer Service" icon="users">
+    - Select correct customer for loyalty tracking
+    - Apply available discounts
+    - Offer delivery options when appropriate
+    - Keep transaction speed high during peak hours
+  </Card>
+  
+  <Card title="Inventory" icon="boxes">
+    - Pay attention to low stock warnings
+    - Don't override stock limits
+    - Report products with incorrect stock
+    - Clear cancelled invoices to release stock
+  </Card>
+</CardGroup>
+
+## Common Workflows
+
+### Quick Cash Sale
+
+1. Scan products
+2. Press F3 (payment)
+3. Enter cash amount
+4. Press Enter
+5. Print invoice
+
+### Sale with Customer and Discount
+
+1. Select customer first
+2. Add products to cart
+3. Open payment (F3)
+4. Apply general discount if needed
+5. Enter payment method
+6. Complete sale
+
+### Split Payment
+
+1. Add all products
+2. Open payment dialog (F3)
+3. Enter first payment amount (e.g., cash)
+4. Click "Add Payment Method"
+5. Select second method (e.g., card)
+6. Enter remaining amount
+7. Process payment
+
+### Multiple Customers
+
+1. Start first customer's sale
+2. Press F5 to create new invoice
+3. Serve second customer
+4. Switch between invoice tabs as needed
+5. Complete each sale independently
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Barcode Scanner Not Working">
+    - Check USB connection
+    - Verify scanner settings in configuration
+    - Test scanner in a text editor
+    - Ensure barcode input has focus
+  </Accordion>
+  
+  <Accordion title="Prices Incorrect">
+    - Verify product price in inventory
+    - Check for active promotions
+    - Ensure correct warehouse selected
+    - Review discount configurations
+  </Accordion>
+  
+  <Accordion title="Invoice Not Printing">
+    - Check printer connection
+    - Verify printer settings (port, paper width)
+    - Review printer configuration in settings
+    - Test with system print dialog
+  </Accordion>
+</AccordionGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Managing Inventory" icon="boxes" href="/guides/managing-inventory">
+    Learn how to add and update products
+  </Card>
+  
+  <Card title="Processing Payments" icon="credit-card" href="/guides/processing-payments">
+    Detailed payment method guide
+  </Card>
+  
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    Working with customer data
+  </Card>
+  
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    View sales analytics and reports
+  </Card>
+</CardGroup>

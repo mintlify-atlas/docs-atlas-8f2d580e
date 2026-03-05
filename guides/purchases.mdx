@@ -1,0 +1,346 @@
+---
+title: 'Purchase Orders'
+description: 'Create and manage purchase orders, receive inventory, and track supplier purchases'
+icon: 'cart-shopping'
+---
+
+## Overview
+
+The Purchase Orders module is the central hub for managing all inventory purchases in Karma POS. It supports multiple workflows including manual entry, AI-powered document scanning, and bulk import of purchase details.
+
+<Info>
+Purchase orders automatically update inventory levels when saved, ensuring accurate stock tracking.
+</Info>
+
+## Creating a Purchase Order
+
+### Manual Entry
+
+<Steps>
+  <Step title="Select Supplier">
+    Choose the supplier from the dropdown list. This field is **required**.
+  </Step>
+  
+  <Step title="Enter Purchase Details">
+    Fill in the purchase information:
+    - **Invoice Number**: Supplier's invoice number
+    - **Purchase Order**: Optional PO reference
+    - **Date**: Purchase date (defaults to today)
+    - **Status**: Select payment status (Paid, Pending, Partial)
+  </Step>
+  
+  <Step title="Add Products">
+    Use the product search to add items:
+    - Type product name, reference, barcode, or extensions
+    - Select from the autocomplete dropdown
+    - Product is added to the purchase details table
+  </Step>
+  
+  <Step title="Configure Product Details">
+    For each product, specify:
+    - **Quantity**: Number of units purchased
+    - **Cost**: Unit cost from supplier
+    - **Warehouse**: Destination warehouse (required)
+    - **Tax Percent**: Applicable tax percentage
+  </Step>
+  
+  <Step title="Review Totals">
+    The system automatically calculates:
+    - Subtotal
+    - Tax
+    - Total amount
+  </Step>
+  
+  <Step title="Save Purchase">
+    Click **Save Purchase** to process the order and update inventory.
+  </Step>
+</Steps>
+
+### AI-Powered Document Upload
+
+Karma POS includes intelligent document processing to extract purchase details automatically:
+
+<AccordionGroup>
+  <Accordion title="PDF Invoice Upload">
+    Upload a PDF invoice and the AI will extract:
+    - Product names and references
+    - Barcodes
+    - Quantities
+    - Unit prices
+    - Product extensions (size, color)
+  </Accordion>
+  
+  <Accordion title="Image Processing">
+    Upload images of invoices or packing slips for automatic data extraction.
+  </Accordion>
+  
+  <Accordion title="Document Formats">
+    Supported formats:
+    - PDF documents
+    - Images (JPG, PNG)
+    - Word documents (.doc, .docx)
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+The AI matches products against your existing catalog using barcode first, then reference + variants.
+</Tip>
+
+### Product Matching Logic
+
+When processing uploaded documents, the system uses intelligent matching:
+
+```typescript
+// Matching priority:
+1. Barcode (exact match)
+2. Reference + Extension1 (size)
+3. Reference + Extension2 (color)
+4. Reference only
+```
+
+If a product doesn't exist in your catalog, you can:
+- Link it to an existing product
+- Create a new product directly from the purchase form
+
+## Purchase Status Options
+
+Track the payment status of each purchase:
+
+| Status | Value | Description |
+|--------|-------|-------------|
+| **PAGADA** | 4 | Fully paid |
+| **PENDIENTE DE PAGO** | 5 | Payment pending |
+| **PARCIAL** | 6 | Partially paid |
+
+<Note>
+You can update the status after creating the purchase by viewing it in the history and changing the status dropdown.
+</Note>
+
+## Global Warehouse Assignment
+
+Speed up data entry by setting a global warehouse:
+
+1. Select a warehouse from the **Global Warehouse** dropdown
+2. All products in the purchase will automatically use this warehouse
+3. You can still override individual products if needed
+
+```typescript
+// When global warehouse is applied:
+applyGlobalWarehouse(event: any) {
+  purchase.details.forEach(item => {
+    item.warehouseId = newWarehouseId;
+  });
+}
+```
+
+## Adding Products to Purchase
+
+### Quick Product Search
+
+The autocomplete search filters products by:
+- Product name
+- Reference code
+- Barcode
+- Extension 1 (e.g., size)
+- Extension 2 (e.g., color)
+
+### Duplicate Product Handling
+
+If you add a product that's already in the purchase:
+- The system automatically increments the quantity
+- Cost and other details remain unchanged
+- You can manually adjust after adding
+
+## Product Linking Workflow
+
+For products detected in uploads but not in your catalog:
+
+<Steps>
+  <Step title="Identify Unlinked Product">
+    Products without a `productId` show a warning indicator.
+  </Step>
+  
+  <Step title="Choose Action">
+    You have two options:
+    - **Link to Existing**: Search and link to an existing product
+    - **Create New**: Create a new product with pre-filled data
+  </Step>
+  
+  <Step title="Link Product">
+    Use the product linker dialog to search and select the correct catalog product.
+  </Step>
+  
+  <Step title="Auto-Update Details">
+    Once linked, the system updates:
+    - Product ID
+    - Category
+    - Unit of measure
+    - Other master data
+  </Step>
+</Steps>
+
+## Creating Products from Purchases
+
+Quickly create new products without leaving the purchase screen:
+
+1. Click **Create & Link** on an unlinked product row
+2. The product form opens with pre-filled data:
+   - Name, reference, barcode
+   - Extensions (size, color)
+   - Category and unit of measure
+3. Complete remaining fields (price, warehouses, etc.)
+4. Save - the product is created and automatically linked
+
+## Purchase Validation
+
+The system validates all purchases before saving:
+
+<CardGroup cols={2}>
+  <Card title="Required Fields" icon="circle-exclamation">
+    - Supplier selected
+    - Status selected
+    - At least one product
+  </Card>
+  
+  <Card title="Product Details" icon="box-check">
+    - Valid product ID
+    - Quantity > 0
+    - Cost > 0
+    - Warehouse assigned
+  </Card>
+</CardGroup>
+
+<Warning>
+The system will show specific error messages indicating which row has invalid data.
+</Warning>
+
+## Purchase History
+
+### Viewing Past Purchases
+
+1. Switch to the **History** view
+2. Select a date range
+3. Click **Load History**
+4. Filter by status if needed
+
+### Purchase Details Modal
+
+Click any purchase in the history to view:
+- Complete product list
+- Quantities and costs
+- Warehouses
+- Invoice information
+- Payment status
+
+### Updating Purchase Status
+
+From the details modal:
+1. Select a new status from the dropdown
+2. The system updates immediately
+3. History reflects the change
+
+## Exporting Purchase Data
+
+Use the export feature to generate Excel reports of your purchases for accounting or analysis.
+
+<Tip>
+Export functions respect your date range and filter settings.
+</Tip>
+
+## Automatic Calculations
+
+The system automatically calculates financial totals:
+
+```typescript
+// Calculation logic:
+subtotal = Σ(quantity × cost)
+tax = Σ(quantity × cost × taxPercent/100)
+total = subtotal + tax
+```
+
+Totals update in real-time as you modify quantities, costs, or tax percentages.
+
+## Permission Requirements
+
+| Permission | Action |
+|------------|--------|
+| `canView` | View purchase history |
+| `canCreate` | Create new purchases |
+| `canEdit` | Modify existing purchases |
+| `canDelete` | Delete purchase records |
+| `canExport` | Export to Excel |
+
+<Info>
+Configured under the **Compras** (Purchases) module in permissions settings.
+</Info>
+
+## Code Reference
+
+Purchase functionality is implemented in:
+
+- **Component**: `src/app/components/pages/purchases/purchases.component.ts`
+- **Service**: `src/app/components/services/inventory.service.ts`
+- **Key Endpoints**:
+  - `POST /api/Inventory/SavePurchase`
+  - `GET /api/Inventory/GetPurchases/{startDate}/{endDate}/{companiaId}`
+  - `GET /api/Inventory/GetPurchaseDetail/{purchaseId}`
+  - `POST /api/Inventory/GetDetailPurchases` (AI extraction)
+  - `GET /api/Inventory/UpdateStatePurchase/{stateId}/{purchaseId}`
+
+## Inventory Impact
+
+When a purchase is saved:
+
+<Steps>
+  <Step title="Stock Levels Update">
+    Product quantities are added to the specified warehouse.
+  </Step>
+  
+  <Step title="Cost Tracking">
+    Purchase costs are recorded for margin analysis.
+  </Step>
+  
+  <Step title="Low Stock Alerts">
+    Stock levels are checked against minimum thresholds.
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use AI Document Upload">
+    Save time by uploading supplier invoices instead of manual data entry. Review and correct any extraction errors before saving.
+  </Accordion>
+  
+  <Accordion title="Set Global Warehouse First">
+    If all products go to the same warehouse, set the global warehouse before adding products.
+  </Accordion>
+  
+  <Accordion title="Verify Product Links">
+    Always ensure products are properly linked to your catalog before saving to maintain accurate inventory.
+  </Accordion>
+  
+  <Accordion title="Track Payment Status">
+    Update purchase status as payments are made to maintain accurate accounts payable records.
+  </Accordion>
+  
+  <Accordion title="Regular History Review">
+    Review purchase history regularly to identify patterns, verify deliveries, and reconcile with supplier statements.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Manage Suppliers" icon="truck" href="/guides/suppliers">
+    Add and manage your supplier database
+  </Card>
+  
+  <Card title="Low Stock Alerts" icon="triangle-exclamation" href="/guides/low-stock-alerts">
+    Monitor inventory levels and reorder points
+  </Card>
+  
+  <Card title="Inventory Management" icon="boxes-stacked" href="/guides/managing-inventory">
+    Track and manage your product inventory
+  </Card>
+</CardGroup>

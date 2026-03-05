@@ -1,0 +1,188 @@
+---
+title: 'Supplier Management'
+description: 'Manage your suppliers, contact information, and payment terms in Karma POS'
+icon: 'truck'
+---
+
+## Overview
+
+The Supplier Management module allows you to maintain a comprehensive database of your suppliers, including their contact information, payment terms, and transaction history. This is essential for efficient purchasing and inventory management.
+
+<Info>
+Supplier data is used throughout the system when creating purchase orders and tracking inventory sources.
+</Info>
+
+## Adding a New Supplier
+
+To register a new supplier in the system:
+
+<Steps>
+  <Step title="Open Supplier Dialog">
+    Click the **New Supplier** button to open the supplier creation form.
+  </Step>
+  
+  <Step title="Enter Business Information">
+    Fill in the required business details:
+    - **Business Name**: Legal name of the supplier company
+    - **Tax ID**: Tax identification number (required)
+    - **Contact Name**: Primary contact person at the supplier
+  </Step>
+  
+  <Step title="Add Contact Details">
+    Provide communication information:
+    - **Phone**: Office phone number
+    - **Mobile**: Mobile contact number (required)
+    - **Email**: Primary email address (required)
+    - **City**: Supplier's city location
+  </Step>
+  
+  <Step title="Set Payment Terms">
+    Configure the payment terms:
+    - **Payment Term**: Number of days for payment (e.g., 30, 60, 90 days)
+    - **Status**: Toggle to activate/deactivate the supplier
+  </Step>
+  
+  <Step title="Save Supplier">
+    Click **Save** to register the supplier in your database.
+  </Step>
+</Steps>
+
+<Note>
+All fields except phone are required. The system validates that all mandatory information is provided before saving.
+</Note>
+
+## Supplier Information Fields
+
+The system tracks the following information for each supplier:
+
+<CardGroup cols={2}>
+  <Card title="Business Details" icon="building">
+    - Business Name
+    - Tax ID
+    - City
+  </Card>
+  
+  <Card title="Contact Information" icon="address-card">
+    - Contact Name
+    - Phone
+    - Mobile
+    - Email
+  </Card>
+  
+  <Card title="Payment Terms" icon="calendar-check">
+    - Payment Term (days)
+    - Status (Active/Inactive)
+  </Card>
+  
+  <Card title="System Fields" icon="database">
+    - Company ID
+    - User ID
+    - Supplier ID
+  </Card>
+</CardGroup>
+
+## Editing Supplier Information
+
+To update an existing supplier's information:
+
+1. Locate the supplier in the suppliers table
+2. Click the **Edit** button next to the supplier
+3. Modify the desired fields in the form
+4. Click **Save** to update the information
+
+<Tip>
+The system clones the supplier data when editing to prevent live updates to the table while you're making changes.
+</Tip>
+
+## Searching and Filtering
+
+The supplier list includes a powerful search feature that filters across multiple fields:
+
+```typescript
+// Search filters across:
+- Business Name
+- Tax ID
+- Contact Name
+- City
+- Email
+```
+
+Simply type in the search box, and the list will automatically filter to show matching suppliers.
+
+## Supplier Status Management
+
+Each supplier can be marked as active or inactive:
+
+- **Active** (true): Supplier appears in purchase order dropdowns
+- **Inactive** (false): Supplier is hidden from active selections but retained for historical records
+
+<Warning>
+Deactivating a supplier doesn't delete historical purchase records associated with them.
+</Warning>
+
+## Permission Requirements
+
+The Suppliers module uses role-based permissions:
+
+| Permission | Description |
+|------------|-------------|
+| `canView` | View the suppliers list |
+| `canCreate` | Add new suppliers |
+| `canEdit` | Modify existing suppliers |
+| `canDelete` | Remove suppliers from the system |
+| `canExport` | Export supplier data |
+
+<Info>
+Permissions are configured per user role in the **Proveedores** (Suppliers) module.
+</Info>
+
+## Integration with Purchases
+
+Suppliers are automatically available in the purchase order system:
+
+- Select a supplier when creating a purchase order
+- View all purchases made from a specific supplier
+- Track payment terms and due dates based on supplier settings
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Maintain Accurate Contact Information">
+    Keep supplier contact details up to date to ensure smooth communication for orders, deliveries, and payments.
+  </Accordion>
+  
+  <Accordion title="Set Realistic Payment Terms">
+    Configure payment terms that match your actual agreements with suppliers. This helps with cash flow planning and payment tracking.
+  </Accordion>
+  
+  <Accordion title="Use Descriptive Business Names">
+    Use clear, searchable business names to make it easy to find suppliers when creating purchase orders.
+  </Accordion>
+  
+  <Accordion title="Regular Data Cleanup">
+    Periodically review and deactivate suppliers you no longer work with, rather than deleting them to preserve historical data.
+  </Accordion>
+</AccordionGroup>
+
+## Code Reference
+
+The supplier management functionality is implemented in:
+
+- **Component**: `src/app/components/pages/master/suppliers/suppliers.component.ts`
+- **Service**: `src/app/components/services/master.service.ts`
+- **API Endpoints**:
+  - `GET /api/Master/GetSuppliers/{companiaId}`
+  - `POST /api/Master/CreateSupplier`
+  - `DELETE /api/Master/DeleteSupplier`
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Purchase Orders" icon="cart-shopping" href="/guides/purchases">
+    Learn how to create purchase orders from your suppliers
+  </Card>
+  
+  <Card title="Manage Inventory" icon="boxes-stacked" href="/guides/managing-inventory">
+    Track products received from suppliers
+  </Card>
+</CardGroup>

@@ -1,0 +1,407 @@
+---
+title: Cash Register
+description: Manage cash register operations including opening, closing, and reconciliation
+icon: cash-register
+---
+
+## Overview
+
+The Cash Register module in Karma POS allows you to manage daily cash register operations, track opening and closing balances, and reconcile cash and card payments at the end of shifts.
+
+## Cash Register Structure
+
+### Cash Register Model
+
+```typescript
+interface CashRegister {
+    id: string;
+    name: string;
+    status: "open" | "closed";
+    openedAt: string;
+    closedAt?: string;
+    openingBalance: number;
+    expectedBalance: number;
+    actualBalance?: number;
+    difference?: number;
+    operator: string;
+}
+```
+
+### Key Fields
+
+<CardGroup cols={2}>
+  <Card title="Opening Balance" icon="money-bill-wave">
+    Initial cash amount when opening the register
+  </Card>
+  <Card title="Expected Balance" icon="calculator">
+    Calculated balance based on opening + sales
+  </Card>
+  <Card title="Actual Balance" icon="hand-holding-dollar">
+    Physical count during closing
+  </Card>
+  <Card title="Difference" icon="scale-balanced">
+    Variance between expected and actual
+  </Card>
+</CardGroup>
+
+## Opening a Cash Register
+
+### Open Register Dialog
+
+```typescript
+handleOpenCashRegister(): void {
+    if (this.openingBalance === null || this.openingBalance <= 0) {
+        // Show validation error
+        return;
+    }
+
+    const newCashRegister: CashRegister = {
+        id: String(Date.now()),
+        name: `Caja ${this.cashRegisters.length + 1}`,
+        status: "open",
+        openedAt: new Date().toISOString(),
+        openingBalance: this.openingBalance,
+        expectedBalance: this.openingBalance,
+        operator: "Usuario Actual",
+    };
+
+    this.cashRegisters = [newCashRegister, ...this.cashRegisters];
+    console.log("Abriendo caja con balance inicial:", this.openingBalance);
+    
+    this.showOpenDialog = false;
+    this.openingBalance = null;
+    this.updateActiveCashRegister();
+}
+```
+
+<Steps>
+  <Step title="Enter Opening Balance">
+    Specify the initial cash amount in the register
+  </Step>
+  <Step title="Assign Operator">
+    The current user is automatically assigned as the operator
+  </Step>
+  <Step title="Register Opens">
+    Cash register becomes active and ready for transactions
+  </Step>
+</Steps>
+
+<Note>
+  Opening balance must be greater than zero to open a cash register.
+</Note>
+
+## Managing Active Register
+
+### Find Active Register
+
+```typescript
+updateActiveCashRegister(): void {
+    this.activeCashRegister = this.cashRegisters.find(
+        (cr) => cr.status === "open"
+    );
+}
+```
+
+Only one cash register can be active (open) at a time per user.
+
+### Expected Balance Calculation
+
+The expected balance updates as sales are processed:
+
+```typescript
+// Expected balance = opening balance + today's sales
+expectedBalance = openingBalance + totalSalesForDay;
+```
+
+## Closing a Cash Register
+
+### Close Register Process
+
+```typescript
+handleCloseCashRegister(): void {
+    if (!this.activeCashRegister || 
+        this.actualCash === null || 
+        this.actualCard === null) {
+        // Show validation error
+        return;
+    }
+
+    const totalActual = this.actualCash + this.actualCard;
+    const difference = totalActual - 
+        (this.activeCashRegister.expectedBalance || 0);
+
+    this.cashRegisters = this.cashRegisters.map((cr) =>
+        cr.id === this.activeCashRegister?.id
+            ? {
+                ...cr,
+                status: "closed",
+                closedAt: new Date().toISOString(),
+                actualBalance: totalActual,
+                difference: difference,
+            }
+            : cr
+    );
+    
+    console.log("Cerrando caja - Diferencia:", difference);
+    
+    this.showCloseDialog = false;
+    this.actualCash = null;
+    this.actualCard = null;
+    this.updateActiveCashRegister();
+}
+```
+
+<Steps>
+  <Step title="Count Cash">
+    Enter the actual cash amount in the register
+  </Step>
+  <Step title="Count Card Payments">
+    Enter the total card payment amounts
+  </Step>
+  <Step title="Calculate Difference">
+    System automatically calculates variance
+  </Step>
+  <Step title="Close Register">
+    Register is closed and recorded for audit
+  </Step>
+</Steps>
+
+### Payment Method Breakdown
+
+When closing, separate counts for:
+
+- **Cash Payments**: Physical cash in the register
+- **Card Payments**: Credit/debit card transaction totals
+
+```typescript
+// Closing variables
+actualCash: number | null = null;
+actualCard: number | null = null;
+```
+
+## Reconciliation
+
+### Calculating Differences
+
+The difference indicates discrepancies:
+
+```typescript
+const totalActual = this.actualCash + this.actualCard;
+const difference = totalActual - this.activeCashRegister.expectedBalance;
+```
+
+**Interpretation:**
+- **Positive difference**: More money than expected (overage)
+- **Negative difference**: Less money than expected (shortage)
+- **Zero difference**: Perfect balance
+
+<Warning>
+  Significant differences may indicate errors in transactions, theft, or miscounting. Investigate large variances immediately.
+</Warning>
+
+## Register History
+
+### View Past Sessions
+
+All cash register sessions are stored:
+
+```typescript
+cashRegisters: CashRegister[] = [
+    {
+        id: "1",
+        name: "Caja Principal",
+        status: "open",
+        openedAt: "2024-01-15T08:00:00.000Z",
+        openingBalance: 200.0,
+        expectedBalance: 1247.5,
+        operator: "María González",
+    },
+    {
+        id: "2",
+        name: "Caja Secundaria",
+        status: "closed",
+        openedAt: "2024-01-14T08:00:00.000Z",
+        closedAt: "2024-01-14T20:00:00.000Z",
+        openingBalance: 150.0,
+        expectedBalance: 856.75,
+        actualBalance: 850.0,
+        difference: -6.75,
+        operator: "Carlos Pérez",
+    },
+];
+```
+
+## Display & Formatting
+
+### Date Formatting
+
+```typescript
+formatDate(dateString: string | undefined): string {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+```
+
+### Time Open Calculation
+
+```typescript
+getOpenTime(openedAt: string): string {
+    const openedDate = new Date(openedAt).getTime();
+    const now = Date.now();
+    const diffHours = Math.floor((now - openedDate) / (1000 * 60 * 60));
+    return `${diffHours}h`;
+}
+```
+
+## Dashboard Statistics
+
+### Today's Sales Summary
+
+Display key metrics for the active register:
+
+```typescript
+activeCashRegister: CashRegister | undefined;
+todaySales: number = 1047.5;
+expectedCash: number = 650.25;
+expectedCard: number = 397.25;
+```
+
+<CardGroup cols={3}>
+  <Card title="Today's Sales" icon="chart-line">
+    Total sales amount for current session
+  </Card>
+  <Card title="Expected Cash" icon="money-bill">
+    Calculated cash that should be in register
+  </Card>
+  <Card title="Expected Card" icon="credit-card">
+    Total card payments processed
+  </Card>
+</CardGroup>
+
+## Icon Mapping
+
+### PrimeIcons Integration
+
+```typescript
+getPrimeIcon(iconName: string): string {
+    switch (iconName) {
+        case 'DollarSign': return 'pi pi-dollar';
+        case 'CheckCircle': return 'pi pi-check-circle';
+        case 'Banknote': return 'pi pi-money-bill';
+        case 'CreditCard': return 'pi pi-credit-card';
+        case 'AlertCircle': return 'pi pi-exclamation-circle';
+        default: return '';
+    }
+}
+```
+
+## UI Components
+
+### Dialog Components
+
+<Tabs>
+  <Tab title="Open Register">
+    ```typescript
+    showOpenDialog: boolean = false;
+    openingBalance: number | null = null;
+    ```
+    Input field for opening balance with validation
+  </Tab>
+  <Tab title="Close Register">
+    ```typescript
+    showCloseDialog: boolean = false;
+    actualCash: number | null = null;
+    actualCard: number | null = null;
+    ```
+    Separate inputs for cash and card counts
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Count Carefully">
+    Always double-check cash and card totals before closing the register
+  </Accordion>
+  <Accordion title="Document Discrepancies">
+    Record the reason for any significant differences
+  </Accordion>
+  <Accordion title="Regular Reconciliation">
+    Close and reconcile registers at the end of each shift
+  </Accordion>
+  <Accordion title="Secure Opening Balance">
+    Keep the opening balance consistent for easier tracking
+  </Accordion>
+</AccordionGroup>
+
+## Audit Trail
+
+Each cash register session creates an audit record:
+
+- **Who**: Operator name
+- **When**: Open and close timestamps
+- **What**: All balances and differences
+- **Status**: Open or closed
+
+<Info>
+  This audit trail is essential for accounting, theft prevention, and financial reporting.
+</Info>
+
+## Component Lifecycle
+
+### Initialization
+
+```typescript
+ngOnInit(): void {
+    this.updateActiveCashRegister();
+}
+```
+
+On component load:
+1. Check for active (open) cash register
+2. Load cash register history
+3. Display current status
+
+## Future Enhancements
+
+The current implementation is a UI prototype. Future versions will include:
+
+- Backend API integration for persisting cash register data
+- Multi-user support with operator tracking
+- Advanced reporting and analytics
+- Integration with accounting systems
+- Mobile app for register management
+
+<Note>
+  The current cash register component uses in-memory data. In production, this data should be persisted to a database.
+</Note>
+
+## Component Location
+
+<Info>
+  **Source**: `src/app/components/pages/cash-register/cash-register.component.ts`
+</Info>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="POS System" icon="cash-register" href="/features/pos-system">
+    Process sales through the point of sale
+  </Card>
+  <Card title="Sales & Invoicing" icon="file-invoice" href="/features/sales-invoicing">
+    View invoices included in register totals
+  </Card>
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    Analyze cash register performance
+  </Card>
+  <Card title="Cash Movements" icon="money-bill-transfer" href="/features/cash-register">
+    Track cash in/out transactions
+  </Card>
+</CardGroup>

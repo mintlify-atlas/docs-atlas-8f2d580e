@@ -1,0 +1,424 @@
+---
+title: Warehouses
+description: Configure and manage multiple warehouse locations for inventory tracking in Karma POS
+icon: warehouse
+---
+
+## Overview
+
+The Warehouses module enables multi-location inventory management. Track stock levels separately for each physical location, transfer inventory between warehouses, and maintain accurate inventory records across your business.
+
+<Info>
+  Each warehouse maintains independent inventory counts. Products can have different stock levels in different warehouses.
+</Info>
+
+## Warehouse Configuration
+
+### Warehouse Data Model
+
+```typescript
+interface Warehouse {
+  warehouseId: string;
+  companiaId: number;
+  name: string;          // Warehouse name
+  code: string;          // Unique identifier code
+  address?: string;      // Physical address
+  city?: string;         // City location
+  phone?: string;        // Contact phone
+  active: boolean;       // Active status
+}
+```
+
+### Required Fields
+
+<ParamField path="name" type="string" required>
+  Name of the warehouse (e.g., "Main Warehouse", "Store #1")
+</ParamField>
+
+<ParamField path="code" type="string" required>
+  Unique code to identify the warehouse (e.g., "WH-001", "STORE-MED")
+</ParamField>
+
+### Optional Fields
+
+<ParamField path="address" type="string">
+  Physical street address of the warehouse location
+</ParamField>
+
+<ParamField path="city" type="string">
+  City where the warehouse is located
+</ParamField>
+
+<ParamField path="phone" type="string">
+  Contact phone number for the warehouse
+</ParamField>
+
+<ParamField path="active" type="boolean" default="true">
+  Whether the warehouse is currently active in the system
+</ParamField>
+
+## Managing Warehouses
+
+### Creating a Warehouse
+
+<Steps>
+  <Step title="Navigate to Warehouses">
+    Access the Warehouses module from the Administration menu.
+  </Step>
+  
+  <Step title="Click 'Nueva Bodega'">
+    Opens the warehouse creation dialog. Requires `canCreate` permission.
+  </Step>
+  
+  <Step title="Enter Warehouse Details">
+    Fill in the required fields:
+    
+    ```typescript
+    {
+      name: 'Main Warehouse',
+      code: 'WH-MAIN',
+      address: 'Calle 50 #30-15',
+      city: 'Medellín',
+      phone: '+57 300 123 4567',
+      active: true
+    }
+    ```
+  </Step>
+  
+  <Step title="Save Warehouse">
+    Click "Guardar" to create the warehouse.
+  </Step>
+</Steps>
+
+<Note>
+  The warehouse is automatically associated with your current company (`companiaId`) from your session.
+</Note>
+
+### Editing a Warehouse
+
+<Steps>
+  <Step title="Locate the Warehouse">
+    Find the warehouse in the warehouse table.
+  </Step>
+  
+  <Step title="Click Edit Button">
+    Click the edit (pencil) icon. Requires `canEdit` permission.
+  </Step>
+  
+  <Step title="Modify Details">
+    Update the warehouse information as needed.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click "Guardar" to update the warehouse.
+  </Step>
+</Steps>
+
+### Searching Warehouses
+
+Use the search bar to filter warehouses by:
+- Warehouse name
+- Warehouse code
+- City
+
+```typescript
+filterWarehouses() {
+  const term = this.searchTerm.toLowerCase();
+  this.filteredWarehouses = this.warehouses.filter(b => 
+    b.name.toLowerCase().includes(term) || 
+    b.code.toLowerCase().includes(term) || 
+    (b.city?.toLowerCase().includes(term) ?? false)
+  );
+}
+```
+
+### Deactivating a Warehouse
+
+Instead of hard deletion, warehouses are deactivated:
+
+```typescript
+deleteWarehouse(warehouse: Warehouse) {
+  const payload = { ...warehouse, active: false };
+  
+  masterService.deleteWarehouse(payload).subscribe({
+    next: (res) => {
+      if (res.code === 0) {
+        // Warehouse deactivated successfully
+      }
+    }
+  });
+}
+```
+
+<Warning>
+  Deactivating a warehouse does not delete inventory records. Historical data is preserved, but the warehouse cannot be used for new transactions.
+</Warning>
+
+## Validation Rules
+
+### Name Validation
+- Must not be empty
+- Whitespace-only names are rejected
+
+### Code Validation
+- Must not be empty
+- Should be unique across all warehouses
+- Typically uppercase for consistency
+
+```typescript
+if (!newWarehouse.name.trim() || !newWarehouse.code.trim()) {
+  messageService.add({
+    severity: 'warn',
+    summary: 'Campos obligatorios',
+    detail: 'El nombre y el código de la bodega son requeridos.'
+  });
+  return;
+}
+```
+
+## Permission Model
+
+The Warehouses module uses the "Bodegas" permission set:
+
+<CardGroup cols={2}>
+  <Card title="canView" icon="eye">
+    View warehouse list and details
+  </Card>
+  <Card title="canCreate" icon="plus">
+    Create new warehouse locations
+  </Card>
+  <Card title="canEdit" icon="pen">
+    Modify warehouse information
+  </Card>
+  <Card title="canDelete" icon="trash">
+    Deactivate warehouses
+  </Card>
+  <Card title="canExport" icon="download">
+    Export warehouse data
+  </Card>
+</CardGroup>
+
+```typescript
+private applyPermissions(): void {
+  const moduleName = 'Bodegas';
+  
+  const permission = this.permissions.find(
+    p => p.module === moduleName
+  );
+  
+  if (permission) {
+    this.canView = permission.canView;
+    this.canCreate = permission.canCreate;
+    this.canEdit = permission.canEdit;
+    this.canDelete = permission.canDelete;
+    this.canExport = permission.canExport;
+  }
+}
+```
+
+## API Integration
+
+### Load Warehouses
+
+```typescript
+masterService.getWarehouses(companiaId).subscribe({
+  next: (res: ApiResponse<Warehouse[]>) => {
+    this.warehouses = res.data || [];
+    this.filteredWarehouses = this.warehouses;
+  },
+  error: () => {
+    // Handle error
+  }
+});
+```
+
+### Create/Update Warehouse
+
+```typescript
+masterService.createWarehouse(newWarehouse).subscribe({
+  next: (res) => {
+    if (res.code === 0) {
+      // Success: reload warehouse list
+      this.loadWarehouses();
+    }
+  }
+});
+```
+
+### Deactivate Warehouse
+
+```typescript
+const payload = { ...warehouse, active: false };
+
+masterService.deleteWarehouse(payload).subscribe({
+  next: (res) => {
+    if (res.code === 0) {
+      // Warehouse deactivated
+    }
+  }
+});
+```
+
+## Multi-Warehouse Inventory
+
+### Inventory by Warehouse
+
+When using multiple warehouses, inventory is tracked separately for each location:
+
+<CodeGroup>
+```typescript Product with Multi-Warehouse Inventory
+{
+  productId: 'PROD-001',
+  name: 'Product A',
+  inventory: [
+    { warehouseId: 'WH-001', stock: 50 },
+    { warehouseId: 'WH-002', stock: 30 },
+    { warehouseId: 'WH-003', stock: 10 }
+  ],
+  totalStock: 90
+}
+```
+</CodeGroup>
+
+### Warehouse Selection in Operations
+
+Most inventory operations require warehouse selection:
+- **Sales:** Deduct from specific warehouse
+- **Purchases:** Add to specific warehouse
+- **Transfers:** Move between warehouses
+- **Adjustments:** Modify specific warehouse stock
+
+<Tip>
+  When performing inventory transactions, always verify you're working with the correct warehouse to maintain accurate stock levels.
+</Tip>
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Retail Chain with Multiple Stores">
+    Create a warehouse for each retail location:
+    
+    - **WH-STORE1** - Downtown Store
+    - **WH-STORE2** - Mall Location
+    - **WH-CENTRAL** - Central Distribution Center
+    
+    Track inventory independently at each location and transfer stock between stores as needed.
+  </Accordion>
+  
+  <Accordion title="Single Store with Back Room and Floor">
+    Even single-location businesses can benefit:
+    
+    - **WH-FLOOR** - Sales floor inventory
+    - **WH-BACK** - Back room / storage
+    
+    Separate active selling stock from reserve inventory.
+  </Accordion>
+  
+  <Accordion title="Warehouse and Consignment Locations">
+    Manage owned vs. consignment inventory:
+    
+    - **WH-OWNED** - Company warehouse
+    - **WH-CONSIGN-A** - Consignment location A
+    - **WH-CONSIGN-B** - Consignment location B
+    
+    Track products at consignment locations separately from owned inventory.
+  </Accordion>
+  
+  <Accordion title="Regional Distribution Centers">
+    For larger operations:
+    
+    - **WH-NORTH** - Northern region
+    - **WH-SOUTH** - Southern region
+    - **WH-EAST** - Eastern region
+    
+    Manage regional inventory levels and optimize distribution.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Consistent Naming Conventions">
+    Develop a standard format for warehouse codes:
+    - **WH-{LOCATION}** for warehouses
+    - **STORE-{NUMBER}** for retail locations
+    - **DC-{REGION}** for distribution centers
+    
+    Consistent naming makes inventory tracking easier.
+  </Accordion>
+  
+  <Accordion title="Keep Contact Information Updated">
+    Maintain current addresses and phone numbers, especially if warehouses are third-party or external locations.
+  </Accordion>
+  
+  <Accordion title="Don't Delete, Deactivate">
+    Always use the deactivate function instead of deleting warehouses. This preserves historical inventory data and transaction records.
+  </Accordion>
+  
+  <Accordion title="Assign Primary Warehouse">
+    Designate one warehouse as your primary location for default operations. This simplifies data entry.
+  </Accordion>
+  
+  <Accordion title="Regular Inventory Audits by Warehouse">
+    Conduct physical inventory counts at each warehouse location regularly to ensure system accuracy.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot save warehouse without name and code">
+    **Error:** "El nombre y el código de la bodega son requeridos."
+    
+    **Solution:** Both name and code are mandatory fields. Provide non-empty values for both.
+  </Accordion>
+  
+  <Accordion title="Warehouse list not loading">
+    **Error:** "No se pudieron cargar las bodegas."
+    
+    **Solution:** 
+    1. Check network connectivity
+    2. Verify backend API is running
+    3. Confirm your session is valid (not expired)
+  </Accordion>
+  
+  <Accordion title="Cannot deactivate warehouse">
+    **Error:** "No se pudo eliminar la bodega."
+    
+    **Solution:** 
+    1. Verify you have `canDelete` permission
+    2. Check if there are active inventory transactions
+    3. Contact your administrator if the problem persists
+  </Accordion>
+  
+  <Accordion title="Warehouse not appearing in dropdown">
+    **Issue:** Warehouse doesn't show in product or transaction screens.
+    
+    **Solution:** Verify the warehouse `active` flag is set to `true`. Inactive warehouses are typically hidden from operational dropdowns.
+  </Accordion>
+</AccordionGroup>
+
+## Warehouse Status Indicators
+
+<CardGroup cols={2}>
+  <Card title="Active Warehouse" icon="circle-check" color="#10b981">
+    Available for inventory operations and transactions
+  </Card>
+  <Card title="Inactive Warehouse" icon="circle-xmark" color="#ef4444">
+    Hidden from operations, preserved for historical records only
+  </Card>
+</CardGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Inventory Management" icon="boxes-stacked" href="/features/inventory-management">
+    Learn about inventory tracking and stock management
+  </Card>
+  <Card title="Product Catalog" icon="tag" href="/features/inventory-management">
+    Configure products with warehouse-specific inventory
+  </Card>
+  <Card title="Inventory Transfers" icon="right-left" href="/guides/managing-inventory">
+    Transfer stock between warehouse locations
+  </Card>
+</CardGroup>

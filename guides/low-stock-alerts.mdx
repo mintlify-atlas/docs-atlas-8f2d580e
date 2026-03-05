@@ -1,0 +1,352 @@
+---
+title: 'Low Stock Alerts'
+description: 'Monitor inventory levels, set reorder thresholds, and receive alerts for low stock items'
+icon: 'triangle-exclamation'
+---
+
+## Overview
+
+The Low Stock Alerts system helps you maintain optimal inventory levels by monitoring stock against configurable thresholds. The system provides real-time visibility into products that need reordering, preventing stockouts and lost sales.
+
+<Info>
+Low stock alerts are calculated automatically based on your minimum stock settings for each product and warehouse.
+</Info>
+
+## Alert Levels
+
+The system categorizes products into three alert levels:
+
+<CardGroup cols={3}>
+  <Card title="Critical" icon="circle-exclamation" color="#ef4444">
+    Stock at or below critical threshold (default: 5 units)
+  </Card>
+  
+  <Card title="Low" icon="exclamation-triangle" color="#f97316">
+    Stock at or below minimum stock level
+  </Card>
+  
+  <Card title="Warning" icon="exclamation" color="#eab308">
+    Stock approaching minimum level
+  </Card>
+</CardGroup>
+
+## Dashboard Overview
+
+The low stock dashboard provides quick visibility:
+
+### Summary Cards
+
+At the top of the screen, you'll see real-time counts:
+
+- **Critical Items**: Products requiring immediate attention
+- **Low Items**: Products below minimum stock
+- **Warning Items**: Products approaching reorder point
+- **Unread Alerts**: New critical alerts
+
+### Alert Status Calculation
+
+```typescript
+// Status determination logic:
+if (available <= criticalThreshold) {
+  status = 'critical';
+} else if (available <= minStock) {
+  status = 'low';
+} else {
+  status = 'warning';
+}
+```
+
+## Stock Information Display
+
+For each low stock item, the system shows:
+
+| Field | Description |
+|-------|-------------|
+| **Product Name** | Product description |
+| **Barcode** | Product barcode/SKU |
+| **Available** | Current stock level |
+| **Min Stock** | Configured minimum threshold |
+| **Max Stock** | Configured maximum threshold |
+| **Warehouse** | Storage location |
+| **Status Badge** | Visual alert level indicator |
+
+<Note>
+Stock levels are shown per warehouse. A product may be low in one warehouse but sufficient in another.
+</Note>
+
+## Filtering and Search
+
+### Search Functionality
+
+Quickly find specific products using the search bar:
+
+- Product name
+- Barcode
+
+### Status Filtering
+
+Filter the list by alert level:
+
+<Tabs>
+  <Tab title="All">
+    Show all low stock items regardless of severity
+  </Tab>
+  
+  <Tab title="Critical">
+    Only show items at critical levels requiring immediate action
+  </Tab>
+  
+  <Tab title="Low">
+    Show items below minimum stock level
+  </Tab>
+  
+  <Tab title="Warning">
+    Show items approaching minimum stock
+  </Tab>
+</Tabs>
+
+## Alert Settings Configuration
+
+Customize how the alert system behaves:
+
+<Steps>
+  <Step title="Open Settings">
+    Click the **Settings** or gear icon to open the alert configuration dialog.
+  </Step>
+  
+  <Step title="Configure Thresholds">
+    Set your alert thresholds:
+    - **Critical Threshold**: Stock level triggering critical alerts (default: 5)
+    - **Low Threshold**: Stock level for low alerts (default: 10)
+  </Step>
+  
+  <Step title="Enable Notifications">
+    Toggle notification options:
+    - **Email Notifications**: Receive email alerts for low stock
+    - **Auto Reorder**: Automatically create purchase suggestions (future)
+  </Step>
+  
+  <Step title="Save Settings">
+    Click **Save** to apply your configuration.
+  </Step>
+</Steps>
+
+<Warning>
+Changing thresholds will immediately recategorize all products based on the new values.
+</Warning>
+
+## Status Badges
+
+Visual indicators help you quickly identify priority:
+
+<CodeGroup>
+```typescript Critical
+{
+  label: 'Crítico',
+  class: 'bg-rose-500/20 text-rose-700 border-rose-200'
+}
+```
+
+```typescript Low
+{
+  label: 'Bajo',
+  class: 'bg-orange-500/20 text-orange-700 border-orange-200'
+}
+```
+
+```typescript Warning
+{
+  label: 'Advertencia',
+  class: 'border-yellow-500 text-yellow-700'
+}
+```
+</CodeGroup>
+
+## Setting Minimum Stock Levels
+
+Minimum stock levels are configured per product and warehouse:
+
+1. Go to **Inventory Management**
+2. Edit a product
+3. In the warehouse section, set:
+   - **Min Stock**: Minimum quantity before alert
+   - **Max Stock**: Maximum quantity for optimal stock
+
+<Tip>
+Set minimum stock based on:
+- Lead time from supplier
+- Average daily sales
+- Safety stock buffer
+- Product seasonality
+</Tip>
+
+## Reordering Process
+
+When you identify products needing reorder:
+
+<Steps>
+  <Step title="Review Low Stock List">
+    Identify products requiring immediate reordering based on status.
+  </Step>
+  
+  <Step title="Create Purchase Order">
+    Navigate to **Purchases** and create a new purchase order.
+  </Step>
+  
+  <Step title="Add Products">
+    Add the low stock products to your purchase order.
+  </Step>
+  
+  <Step title="Determine Quantities">
+    Calculate order quantity:
+    ```
+    Order Qty = Max Stock - Current Stock
+    ```
+  </Step>
+  
+  <Step title="Submit to Supplier">
+    Complete and save the purchase order.
+  </Step>
+</Steps>
+
+## Stock Level Management
+
+Best practices for maintaining healthy stock levels:
+
+<AccordionGroup>
+  <Accordion title="Regular Monitoring">
+    Check the low stock dashboard daily or weekly depending on your business volume. Critical items should be addressed immediately.
+  </Accordion>
+  
+  <Accordion title="ABC Analysis">
+    Categorize products by importance:
+    - **A items**: High-value, set tighter controls
+    - **B items**: Medium-value, standard monitoring
+    - **C items**: Low-value, can have higher variance
+  </Accordion>
+  
+  <Accordion title="Seasonal Adjustments">
+    Adjust minimum stock levels seasonally for products with variable demand patterns.
+  </Accordion>
+  
+  <Accordion title="Supplier Lead Time">
+    Set minimum stock to cover the full lead time plus a safety buffer:
+    ```
+    Min Stock = (Daily Sales × Lead Time Days) + Safety Stock
+    ```
+  </Accordion>
+  
+  <Accordion title="Regular Reviews">
+    Review and update minimum/maximum stock levels quarterly based on actual sales patterns.
+  </Accordion>
+</AccordionGroup>
+
+## Data Refresh
+
+Stock levels are refreshed automatically:
+
+- When you load the low stock screen
+- After saving purchases
+- After processing sales
+- When you click refresh/reload
+
+<Info>
+The system queries stock levels from all warehouses associated with your company.
+</Info>
+
+## Permission Requirements
+
+Access to low stock alerts requires permissions:
+
+| Permission | Description |
+|------------|-------------|
+| `canView` | View low stock alerts |
+| `canCreate` | Create reorder rules (future) |
+| `canEdit` | Modify alert settings |
+| `canExport` | Export low stock reports |
+
+<Note>
+Configured under the **Stock Bajo** (Low Stock) module in role permissions.
+</Note>
+
+## Code Reference
+
+Low stock functionality is implemented in:
+
+- **Component**: `src/app/components/pages/low-stock/low-stock.component.ts`
+- **Service**: `src/app/components/services/lowStock.service.ts`
+- **API Endpoint**: `GET /api/LowStock/GetStock/{companiaId}`
+- **Interface**: `Stock` from `src/app/components/pages/api/low-tock`
+
+## Integration with Other Modules
+
+Low stock alerts integrate seamlessly with:
+
+<CardGroup cols={2}>
+  <Card title="Purchases" icon="cart-shopping" href="/guides/purchases">
+    Create purchase orders directly from low stock alerts
+  </Card>
+  
+  <Card title="Inventory" icon="boxes-stacked" href="/guides/managing-inventory">
+    Configure minimum and maximum stock levels per product
+  </Card>
+  
+  <Card title="Suppliers" icon="truck" href="/guides/suppliers">
+    Select preferred suppliers when creating reorder purchases
+  </Card>
+  
+  <Card title="Warehouses" icon="warehouse" href="/admin/warehouses">
+    Monitor stock levels across multiple warehouse locations
+  </Card>
+</CardGroup>
+
+## Preventing Stockouts
+
+Proactive stock management strategies:
+
+<Steps>
+  <Step title="Set Realistic Minimums">
+    Configure minimum stock levels that account for supplier lead times and sales velocity.
+  </Step>
+  
+  <Step title="Monitor Critical Items Daily">
+    Check critical alerts every day and initiate orders immediately.
+  </Step>
+  
+  <Step title="Establish Reorder Routines">
+    Create a regular schedule for reviewing and placing orders (e.g., every Monday).
+  </Step>
+  
+  <Step title="Use Safety Stock">
+    Build in safety stock buffers for your best-selling or most critical products.
+  </Step>
+  
+  <Step title="Track Lead Times">
+    Monitor actual supplier lead times and adjust minimum stock accordingly.
+  </Step>
+</Steps>
+
+## Reporting and Analytics
+
+Use the low stock system for business intelligence:
+
+- **Stockout Frequency**: Track how often products go critical
+- **Reorder Patterns**: Analyze optimal reorder quantities
+- **Supplier Performance**: Evaluate which suppliers cause frequent low stock
+- **Seasonal Trends**: Identify seasonal patterns requiring stock adjustments
+
+<Tip>
+Export low stock data to Excel for deeper analysis and trend identification.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Purchase Orders" icon="cart-shopping" href="/guides/purchases">
+    Restock low inventory by creating purchase orders
+  </Card>
+  
+  <Card title="Configure Inventory" icon="sliders" href="/guides/managing-inventory">
+    Set up minimum and maximum stock levels for your products
+  </Card>
+</CardGroup>

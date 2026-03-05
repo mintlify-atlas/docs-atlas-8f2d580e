@@ -1,0 +1,438 @@
+---
+title: Customer Management
+description: Maintain customer records and information for sales transactions
+icon: users
+---
+
+## Overview
+
+The Karma POS Customer Management system allows you to maintain detailed customer records for both individual and corporate clients. Customer information is integrated with the POS system for quick selection during sales transactions.
+
+## Customer Data Structure
+
+### Customer Model
+
+```typescript
+interface Customer {
+    id: number;
+    companiaId: number;
+    userId: number;
+    identificationTypeId: number;
+    document: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    secondLastName?: string;
+    phone?: string;
+    email: string;
+    
+    // Location data
+    city?: string;
+    department?: string;
+    country?: string;
+    address?: string;
+    
+    // Corporate data
+    isCompany: boolean;
+    nit?: string;
+    businessName?: string;
+    
+    // Audit fields
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+```
+
+## Customer Types
+
+<CardGroup cols={2}>
+  <Card title="Individual Customers" icon="user">
+    Personal customers with first name, last name, and personal identification
+  </Card>
+  <Card title="Corporate Customers" icon="building">
+    Business customers with NIT (Tax ID) and business name
+  </Card>
+</CardGroup>
+
+### Individual vs Corporate
+
+The `isCompany` flag determines the customer type:
+
+- **Individual**: Uses `firstName`, `lastName`, and `document`
+- **Corporate**: Uses `businessName`, `nit`, and additional business fields
+
+## Identification Types
+
+Supported identification documents:
+
+```typescript
+identificationTypes: any[] = [
+    { label: 'CC', value: 1 },    // Cédula de Ciudadanía
+    { label: 'TI', value: 2 },    // Tarjeta de Identidad
+    { label: 'PAS', value: 3 },   // Pasaporte
+    { label: 'NIT', value: 4 }    // Número de Identificación Tributaria
+];
+```
+
+## Creating & Managing Customers
+
+### Create New Customer
+
+```typescript
+openAddDialog() {
+    this.currentCustomer = this.getEmptyCustomer();
+    this.isEditing = false;
+    this.showDialog = true;
+}
+
+private getEmptyCustomer(): Customer {
+    return {
+        id: 0,
+        companiaId: this.companiaId,
+        userId: this.userId,
+        identificationTypeId: 1,
+        document: '',
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        secondLastName: '',
+        phone: '',
+        email: '',
+        city: '',
+        department: '',
+        country: '',
+        address: '',
+        isCompany: false,
+        nit: '',
+        businessName: '',
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+}
+```
+
+### Save Customer
+
+```typescript
+saveCustomer() {
+    // Validate required fields
+    if (!this.currentCustomer.firstName || 
+        !this.currentCustomer.document || 
+        !this.currentCustomer.email) {
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Campos requeridos',
+            detail: 'Debe completar los campos obligatorios.'
+        });
+        return;
+    }
+
+    const operation = this.masterService.CreateClient(this.currentCustomer);
+
+    operation.subscribe({
+        next: (res) => {
+            if (res.code === 0) {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: res.message || 'Operación realizada correctamente.'
+                });
+                this.showDialog = false;
+                this.loadCustomers();
+            }
+        }
+    });
+}
+```
+
+<Note>
+  The same method handles both creating new customers and updating existing ones.
+</Note>
+
+### Edit Customer
+
+```typescript
+editCustomer(customer: Customer) {
+    this.currentCustomer = { ...customer };
+    this.isEditing = true;
+    this.showDialog = true;
+}
+```
+
+### Delete Customer
+
+```typescript
+deleteCustomer(customer: Customer) {
+    if (!confirm(
+        `¿Deseas eliminar el cliente "${customer.firstName} ${customer.lastName}"?`
+    )) return;
+
+    this.masterService.DeleteClient(customer).subscribe({
+        next: (res) => {
+            if (res.code === 0) {
+                this.customers = this.customers.filter(
+                    (c) => c.id !== customer.id
+                );
+                this.filteredCustomers = [...this.customers];
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Eliminado',
+                    detail: res.message || 'Cliente eliminado correctamente.'
+                });
+            }
+        }
+    });
+}
+```
+
+<Warning>
+  Deleting a customer is permanent and cannot be undone. Ensure the customer has no active transactions before deletion.
+</Warning>
+
+## Loading Customers
+
+### Fetch Customer List
+
+```typescript
+loadCustomers() {
+    this.masterService.getClients(this.companiaId).subscribe({
+        next: (res) => {
+            if (res.code === 0) {
+                this.customers = res.data || [];
+                this.filteredCustomers = [...this.customers];
+            } else {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Advertencia',
+                    detail: res.message || 'No se pudieron cargar los clientes.'
+                });
+            }
+        },
+        error: () => {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al cargar los clientes desde el servidor.'
+            });
+        }
+    });
+}
+```
+
+## Search & Filtering
+
+### Customer Search
+
+Search across multiple fields:
+
+```typescript
+filterCustomers() {
+    const term = this.searchTerm.toLowerCase();
+    this.filteredCustomers = this.customers.filter((c) =>
+        `${c.firstName} ${c.lastName} ${c.businessName ?? ''} ${c.document}`
+            .toLowerCase()
+            .includes(term)
+    );
+}
+```
+
+**Searchable fields:**
+- First name
+- Last name
+- Business name (for companies)
+- Document number
+
+### Reset Filters
+
+```typescript
+resetFilters() {
+    this.searchTerm = '';
+    this.filteredCustomers = [...this.customers];
+}
+```
+
+## POS Integration
+
+### Customer Selection in POS
+
+Customers are loaded and available for selection in the POS interface:
+
+```typescript
+// In pos.component.ts
+loadCustomers() {
+    this.masterService.getClients(this.companiaId).subscribe({
+        next: (res) => {
+            if (res.code === 0) {
+                this.customers = res.data || [];
+            }
+        }
+    });
+}
+```
+
+### Customer on Invoice
+
+When processing a sale, customer information is attached:
+
+```typescript
+saveInvoice(invoice: Invoice) {
+    const payload = {
+        companiaId: this.companiaId,
+        userId: this.userId,
+        clientId: invoice.customer?.id || null,
+        clientName: invoice.customer?.businessName || 
+            `${invoice.customer?.firstName ?? ''} 
+             ${invoice.customer?.lastName ?? ''}`.trim() || 
+            'Consumidor Final',
+        clientNit: invoice.customer?.nit || 
+            invoice.customer?.document || '',
+        // ... other invoice data
+    };
+    
+    this.posService.createInvoice(payload).subscribe({
+        next: (res) => {
+            // Handle response
+        }
+    });
+}
+```
+
+<Info>
+  If no customer is selected, the invoice defaults to "Consumidor Final" (Final Consumer).
+</Info>
+
+## Required Fields
+
+### Mandatory Information
+
+The following fields are required when creating or editing customers:
+
+<Steps>
+  <Step title="First Name">
+    Customer's first name (or business name for companies)
+  </Step>
+  <Step title="Document">
+    Identification document number
+  </Step>
+  <Step title="Email">
+    Valid email address for communication
+  </Step>
+</Steps>
+
+### Optional Information
+
+- Middle name and second last name
+- Phone number
+- Address details (city, department, country, street address)
+- NIT (for corporate customers)
+- Business name (for corporate customers)
+
+## Customer Display Names
+
+### Full Name Construction
+
+For individual customers:
+
+```typescript
+const fullName = `${customer.firstName} ${customer.middleName || ''} 
+                  ${customer.lastName} ${customer.secondLastName || ''}`.trim();
+```
+
+For corporate customers:
+
+```typescript
+const displayName = customer.businessName || fullName;
+```
+
+## Permissions
+
+Access control for customer management:
+
+<AccordionGroup>
+  <Accordion title="canView">
+    View customer list and details
+  </Accordion>
+  <Accordion title="canCreate">
+    Create new customer records
+  </Accordion>
+  <Accordion title="canEdit">
+    Modify existing customer information
+  </Accordion>
+  <Accordion title="canDelete">
+    Remove customers from the system
+  </Accordion>
+  <Accordion title="canExport">
+    Export customer data to external formats
+  </Accordion>
+</AccordionGroup>
+
+Permissions are loaded on component initialization:
+
+```typescript
+ngOnInit() {
+    const session = this.authService.getSession() as AuthSession;
+    
+    if (!session) {
+        this.resetPermissions();
+        return;
+    }
+
+    const { userId, companiaId } = session;
+
+    this.loginService.getPermissions(userId, companiaId).subscribe({
+        next: (permissions) => {
+            this.permissions = permissions.data ?? [];
+            this.applyPermissions();
+        },
+        error: () => this.resetPermissions()
+    });
+}
+
+private applyPermissions(): void {
+    const moduleName = 'Clientes';
+    const permission = this.permissions.find((p) => p.module === moduleName);
+    
+    if (!permission) {
+        this.resetPermissions();
+        return;
+    }
+    
+    this.canView = permission.canView;
+    this.canCreate = permission.canCreate;
+    this.canEdit = permission.canEdit;
+    this.canDelete = permission.canDelete;
+    this.canExport = permission.canExport;
+}
+```
+
+## Purchase History
+
+While not directly stored in the customer component, purchase history can be tracked through:
+
+- Invoice records linked to customer ID
+- Sales reports filtered by customer
+- Customer lifetime value calculations
+
+## Component Location
+
+<Info>
+  **Source**: `src/app/components/pages/master/customers/customers.component.ts`  
+  **Service**: `src/app/components/services/master.service.ts`
+</Info>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="POS System" icon="cash-register" href="/features/pos-system">
+    Select customers during sales transactions
+  </Card>
+  <Card title="Sales & Invoicing" icon="file-invoice" href="/features/sales-invoicing">
+    View customer purchase history
+  </Card>
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    Analyze customer sales data
+  </Card>
+  <Card title="Financing" icon="credit-card" href="/features/financing">
+    Manage customer credit and financing
+  </Card>
+</CardGroup>

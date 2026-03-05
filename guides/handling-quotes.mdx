@@ -1,0 +1,688 @@
+---
+title: Handling Quotes
+description: Create, manage, and convert quotes to invoices in Karma POS
+icon: file-invoice-dollar
+---
+
+## Overview
+
+The Quotes module allows you to create formal price quotations for customers, track quote status, and convert accepted quotes into invoices. This is essential for businesses that provide estimates before completing sales.
+
+## Accessing Quotes
+
+Navigate to the **Quotes** module from the main menu. You'll see:
+
+- Summary cards with quote statistics
+- List of all quotes with status indicators
+- Search and filter options
+- Create new quote button
+
+### Quote Dashboard
+
+The dashboard displays:
+
+<CardGroup cols={2}>
+  <Card title="Total Quotes" icon="file-lines">
+    All quotes in the system
+  </Card>
+  
+  <Card title="Sent Quotes" icon="paper-plane">
+    Quotes sent to customers awaiting response
+  </Card>
+  
+  <Card title="Accepted Quotes" icon="check-circle">
+    Quotes accepted by customers
+  </Card>
+  
+  <Card title="Total Value" icon="dollar-sign">
+    Combined value of all quotes
+  </Card>
+</CardGroup>
+
+## Quote Status Explained
+
+Quotes progress through five statuses:
+
+| Status | Badge | Meaning |
+|--------|-------|--------|
+| **Draft** | Gray | Quote being prepared, not sent yet |
+| **Sent** | Blue | Quote sent to customer, awaiting response |
+| **Accepted** | Green | Customer accepted the quote |
+| **Rejected** | Red | Customer declined the quote |
+| **Expired** | Orange | Quote validity period has passed |
+
+## Creating a New Quote
+
+<Steps>
+  <Step title="Open Quote Creation Dialog">
+    Click the **+ New Quote** or **Create Quote** button.
+  </Step>
+  
+  <Step title="Enter Quote Information">
+    Fill in the basic details:
+    - **Quote Number**: Auto-generated (e.g., COT-001) or enter custom number
+    - **Customer**: Select from existing customers
+    - **Quote Date**: Defaults to today's date
+    - **Valid Until**: Defaults to 30 days from quote date
+    - **Status**: Set to "Draft" initially
+  </Step>
+  
+  <Step title="Customer Selection">
+    Choose the customer:
+    1. Click the customer dropdown
+    2. Search by name or email
+    3. Select the customer
+    4. Customer name and email auto-populate
+  </Step>
+  
+  <Step title="Add Products to Quote">
+    For each product/service:
+    
+    **Enter Product Details**:
+    - **Product Name**: Item or service name (required)
+    - **Description**: Additional details about the item (optional)
+    - **Quantity**: Number of units (required, defaults to 1)
+    - **Unit Price**: Price per unit (required)
+    - **Discount**: Percentage discount for this item (optional, 0-100%)
+    
+    **Click Add Item**: Product is added to the quote with calculated total.
+  </Step>
+  
+  <Step title="View Automatic Calculations">
+    The system automatically calculates:
+    - **Item Total**: (Quantity × Unit Price) - Discount
+    - **Subtotal**: Sum of all item totals
+    - **Tax**: Configurable percentage (default 10%)
+    - **Total**: Subtotal + Tax - General Discount
+  </Step>
+  
+  <Step title="Apply General Discount (Optional)">
+    Enter a discount amount to reduce the entire quote total.
+  </Step>
+  
+  <Step title="Add Notes and Terms (Optional)">
+    - **Notes**: Internal notes or special conditions (e.g., "Precios especiales por volumen")
+    - **Terms**: Terms and conditions (e.g., "Válida por 30 días. Precios sujetos a cambio sin previo aviso.")
+  </Step>
+  
+  <Step title="Save Quote">
+    Click **Save Quote** button. The quote is created with:
+    - Unique ID
+    - Timestamp
+    - Creator's name (from user session)
+    - Draft status
+  </Step>
+</Steps>
+
+<Tip>
+Save quotes as "Draft" while working on them. Change to "Sent" when you've sent it to the customer.
+</Tip>
+
+## Managing Quote Items
+
+### Adding Items
+
+<Steps>
+  <Step title="Fill Product Form">
+    Complete all fields in the "Add Item" section:
+    - Product Name (required)
+    - Description (optional but recommended)
+    - Quantity (required)
+    - Unit Price (required)
+    - Discount % (optional)
+  </Step>
+  
+  <Step title="Preview Calculated Total">
+    Before adding, you can see the calculated item total:
+    ```
+    Item Total = Quantity × Unit Price × (1 - Discount% / 100)
+    ```
+  </Step>
+  
+  <Step title="Add to Quote">
+    Click **Add Item**. The item appears in the quote items list.
+  </Step>
+  
+  <Step title="Continue Adding Items">
+    The form resets after each addition. Continue adding all products needed for the quote.
+  </Step>
+</Steps>
+
+### Removing Items
+
+<Steps>
+  <Step title="Locate Item">
+    Find the item in the quote items list.
+  </Step>
+  
+  <Step title="Click Remove">
+    Click the **X** or **Remove** icon next to the item.
+  </Step>
+  
+  <Step title="Automatic Recalculation">
+    The quote totals update immediately after removal.
+  </Step>
+</Steps>
+
+<Warning>
+Removing an item is permanent. If you need to add it back, you must re-enter all item details.
+</Warning>
+
+## Quote Calculations
+
+Understand how quote totals are calculated:
+
+### Item Level Calculation
+
+```
+Item Subtotal = Quantity × Unit Price
+Discount Amount = Item Subtotal × (Discount% / 100)
+Item Total = Item Subtotal - Discount Amount
+```
+
+**Example**:
+- Product: Coca Cola 350ml
+- Quantity: 5
+- Unit Price: $45.00
+- Discount: 5%
+
+```
+Item Subtotal = 5 × $45.00 = $225.00
+Discount Amount = $225.00 × 0.05 = $11.25
+Item Total = $225.00 - $11.25 = $213.75
+```
+
+### Quote Total Calculation
+
+```
+Subtotal = Sum of all Item Totals
+Tax = Subtotal × Tax Rate (default 10%)
+Total = Subtotal + Tax - General Discount
+```
+
+**Example**:
+- Subtotal (sum of items): $450.00
+- Tax (10%): $45.00
+- General Discount: $25.00
+
+```
+Total = $450.00 + $45.00 - $25.00 = $470.00
+```
+
+## Sending Quotes to Customers
+
+<Steps>
+  <Step title="Review Quote">
+    - Verify all items are correct
+    - Confirm customer information
+    - Check totals and discounts
+    - Review notes and terms
+  </Step>
+  
+  <Step title="Change Status to 'Sent'">
+    1. Edit the quote
+    2. Change status dropdown to **Sent**
+    3. Save the quote
+  </Step>
+  
+  <Step title="Send to Customer">
+    Use your preferred method:
+    - **Email**: Export/print quote and email as PDF
+    - **Print**: Print and hand/mail to customer
+    - **WhatsApp**: Use WhatsApp integration (if configured)
+    - **Copy details**: Share quote information via other channels
+  </Step>
+  
+  <Step title="Track Response">
+    The quote remains in "Sent" status until customer responds.
+  </Step>
+</Steps>
+
+<Info>
+Karma POS records the quote status but doesn't have built-in email sending. Use external tools to send the actual quote document to customers.
+</Info>
+
+## Viewing Quote Details
+
+<Steps>
+  <Step title="Locate Quote">
+    Find the quote in the quotes list by:
+    - Scrolling through the list
+    - Using the search bar (quote number or customer name)
+    - Filtering by status
+  </Step>
+  
+  <Step title="Open Details">
+    Click on the quote row or the **View** icon.
+  </Step>
+  
+  <Step title="Review Complete Information">
+    The detail view shows:
+    - Quote number and dates
+    - Customer information
+    - Complete item list with descriptions
+    - All financial calculations
+    - Notes and terms
+    - Status and history
+    - Created by and creation date
+  </Step>
+</Steps>
+
+## Updating Quote Status
+
+### Marking as Accepted
+
+<Steps>
+  <Step title="Customer Accepts">
+    When customer confirms they want to proceed.
+  </Step>
+  
+  <Step title="Update Status">
+    1. Edit the quote
+    2. Change status to **Accepted**
+    3. Save changes
+  </Step>
+  
+  <Step title="Proceed to Invoice">
+    Convert the quote to an invoice (see Converting Quotes section below).
+  </Step>
+</Steps>
+
+### Marking as Rejected
+
+<Steps>
+  <Step title="Customer Declines">
+    When customer decides not to proceed.
+  </Step>
+  
+  <Step title="Update Status">
+    1. Edit the quote
+    2. Change status to **Rejected**
+    3. Optionally add notes about rejection reason
+    4. Save changes
+  </Step>
+  
+  <Step title="Archive or Delete">
+    Rejected quotes remain in the system for record-keeping.
+  </Step>
+</Steps>
+
+### Handling Expired Quotes
+
+<Steps>
+  <Step title="Check Valid Until Date">
+    Monitor quotes approaching their expiration date.
+  </Step>
+  
+  <Step title="Before Expiration">
+    - Follow up with customer
+    - Extend validity date if needed
+    - Update status based on response
+  </Step>
+  
+  <Step title="After Expiration">
+    1. Change status to **Expired**
+    2. Or create a new quote with updated dates/prices
+  </Step>
+</Steps>
+
+## Converting Quotes to Invoices
+
+When a customer accepts a quote, convert it to an invoice:
+
+<Steps>
+  <Step title="Verify Quote is Accepted">
+    Ensure quote status is "Accepted" or customer has verbally confirmed.
+  </Step>
+  
+  <Step title="Open POS Module">
+    Navigate to the Point of Sale interface.
+  </Step>
+  
+  <Step title="Add Quote Products to Cart">
+    Manually add each product from the quote:
+    - Search/scan each product
+    - Set quantities to match quote
+    - Apply discounts to match quote pricing
+  </Step>
+  
+  <Step title="Select Customer">
+    Choose the same customer from the quote.
+  </Step>
+  
+  <Step title="Apply General Discount">
+    In the payment dialog, apply the general discount amount from the quote.
+  </Step>
+  
+  <Step title="Verify Total Matches">
+    Confirm the invoice total matches the quote total exactly.
+  </Step>
+  
+  <Step title="Process Payment">
+    Complete the payment according to the agreed terms.
+  </Step>
+  
+  <Step title="Update Quote Status">
+    Return to quotes and:
+    - Note the invoice number in quote notes
+    - Keep as "Accepted" or change to a custom "Invoiced" status
+  </Step>
+</Steps>
+
+<Warning>
+Currently, quote-to-invoice conversion is a manual process. You must manually recreate the quote contents in the POS system.
+</Warning>
+
+## Searching and Filtering Quotes
+
+### Search Bar
+
+Quickly find quotes by:
+
+<Steps>
+  <Step title="Enter Search Term">
+    Type in the search field:
+    - Quote number (e.g., "COT-001")
+    - Customer name (e.g., "Ana García")
+    - Partial matches work
+  </Step>
+  
+  <Step title="View Filtered Results">
+    The quote list updates instantly to show matches.
+  </Step>
+</Steps>
+
+### Status Filter
+
+Filter quotes by status:
+
+- View only **Draft** quotes to finish pending work
+- View **Sent** quotes to follow up with customers
+- View **Accepted** quotes ready for invoicing
+- View **Rejected** quotes for analysis
+- View **Expired** quotes needing attention
+
+## Editing Existing Quotes
+
+<Steps>
+  <Step title="Locate Quote">
+    Find the quote you want to modify.
+  </Step>
+  
+  <Step title="Click Edit">
+    Click the **Edit** icon or button for that quote.
+  </Step>
+  
+  <Step title="Make Changes">
+    You can modify:
+    - Customer (if not yet sent)
+    - Valid until date
+    - Add or remove items
+    - Change quantities and prices
+    - Update discounts
+    - Modify notes and terms
+    - Change status
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Save** to update the quote.
+  </Step>
+</Steps>
+
+<Tip>
+**Best Practice**: Create a new quote version instead of editing a "Sent" quote. This maintains an audit trail of what the customer originally received.
+</Tip>
+
+## Quote Communication
+
+### Following Up with Customers
+
+For sent quotes awaiting response:
+
+<Steps>
+  <Step title="Review Quote Details">
+    Open the quote to see:
+    - What was quoted
+    - Date sent
+    - Valid until date
+  </Step>
+  
+  <Step title="Contact Customer">
+    Use customer email or phone:
+    - Ask if they received the quote
+    - Answer any questions
+    - Clarify product details
+    - Negotiate if needed
+  </Step>
+  
+  <Step title="Update Based on Response">
+    - **Accepted**: Change status and proceed to invoice
+    - **Questions**: Edit quote with clarifications
+    - **Needs changes**: Create revised quote
+    - **Rejected**: Update status and note reason
+  </Step>
+</Steps>
+
+### Negotiation and Revisions
+
+If customers request changes:
+
+<Steps>
+  <Step title="Option 1: Edit Current Quote">
+    - Edit the existing quote
+    - Make requested changes
+    - Update valid until date
+    - Resend to customer
+  </Step>
+  
+  <Step title="Option 2: Create New Version">
+    - Create a new quote
+    - Use new quote number (e.g., COT-001-R1)
+    - Include revised pricing/items
+    - Reference original quote in notes
+  </Step>
+</Steps>
+
+## Quote Management Workflows
+
+### Standard Quote Process
+
+1. Customer requests price quote
+2. Create new quote (status: Draft)
+3. Add all requested items
+4. Review and finalize
+5. Change status to Sent
+6. Send quote to customer
+7. Follow up after a few days
+8. Customer accepts or rejects
+9. Update status accordingly
+10. If accepted, convert to invoice
+
+### Quick Quote Workflow
+
+For simple quotes:
+
+1. Create quote with status Sent (skip draft)
+2. Add items quickly
+3. Send immediately
+4. Process response
+
+### Recurring Quote Workflow
+
+For repeat customers:
+
+1. Find previous quote for same customer
+2. Create new quote
+3. Copy items from previous quote
+4. Update prices if changed
+5. Update dates
+6. Send new quote
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Accuracy" icon="check-double">
+    - Double-check all quantities and prices
+    - Verify customer contact information
+    - Review totals before sending
+    - Include clear product descriptions
+  </Card>
+  
+  <Card title="Professionalism" icon="briefcase">
+    - Use consistent quote numbering
+    - Include clear terms and conditions
+    - Set realistic validity periods
+    - Respond to customer questions promptly
+  </Card>
+  
+  <Card title="Organization" icon="folder-tree">
+    - Keep quotes up-to-date
+    - Update status promptly
+    - Add notes about customer interactions
+    - Archive old quotes regularly
+  </Card>
+  
+  <Card title="Follow-up" icon="calendar-check">
+    - Contact customer 3-5 days after sending
+    - Send reminder before expiration
+    - Be proactive about expired quotes
+    - Track acceptance/rejection reasons
+  </Card>
+</CardGroup>
+
+## Common Scenarios
+
+<AccordionGroup>
+  <Accordion title="Customer Wants Lower Price">
+    **Response**:
+    1. Review your costs and margins
+    2. Consider offering:
+       - Higher quantity discount
+       - Bundle deals
+       - Payment term flexibility
+    3. Create revised quote with adjusted pricing
+    4. Note negotiation in quote notes
+  </Accordion>
+  
+  <Accordion title="Customer Wants to Change Items">
+    **Response**:
+    1. Clarify exactly what they want
+    2. Create new quote with changes
+    3. Use new quote number
+    4. Reference original quote
+    5. Send revised quote
+  </Accordion>
+  
+  <Accordion title="Quote About to Expire">
+    **Response**:
+    1. Contact customer 3-5 days before expiration
+    2. Ask for decision or if they need more time
+    3. If more time needed, extend valid until date
+    4. If they're not interested, mark as rejected
+    5. If accepted, convert to invoice
+  </Accordion>
+  
+  <Accordion title="Customer Accepts Partial Quote">
+    **Response**:
+    1. Create invoice in POS with only accepted items
+    2. Create new quote for remaining items if still interested
+    3. Note partial acceptance in original quote
+  </Accordion>
+  
+  <Accordion title="Need to Quote Different Warehouses">
+    **Response**:
+    - Quotes don't specify warehouses
+    - During invoice conversion, stock is pulled from available warehouses
+    - If specific warehouse needed, note in quote terms
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot Save Quote">
+    **Check**:
+    - Quote number is unique
+    - Customer is selected
+    - At least one item added
+    - All required fields completed
+    - No validation errors
+  </Accordion>
+  
+  <Accordion title="Totals Don't Calculate">
+    **Causes**:
+    - Quantity or unit price is zero
+    - Discount percentage invalid (must be 0-100)
+    - Browser calculation error
+    
+    **Solution**: Refresh page and re-enter data
+  </Accordion>
+  
+  <Accordion title="Customer Information Not Appearing">
+    **Causes**:
+    - Customer not selected from dropdown
+    - Customer data incomplete in master data
+    
+    **Solution**: 
+    - Reselect customer
+    - Update customer info in Master Data module
+  </Accordion>
+  
+  <Accordion title="Quote Not in List">
+    **Check**:
+    - Search term spelling
+    - Status filter settings
+    - Scroll through complete list
+    - Verify quote was actually saved
+  </Accordion>
+</AccordionGroup>
+
+## Quote Analytics
+
+Monitor quote performance:
+
+### Key Metrics to Track
+
+- **Acceptance Rate**: (Accepted Quotes / Sent Quotes) × 100%
+- **Average Quote Value**: Total Quote Value / Number of Quotes
+- **Response Time**: Days between Sent and Accepted/Rejected
+- **Conversion Rate**: (Quotes Invoiced / Quotes Accepted) × 100%
+- **Expiration Rate**: (Expired Quotes / Sent Quotes) × 100%
+
+### Improving Quote Success
+
+<CardGroup cols={2}>
+  <Card title="Higher Acceptance" icon="arrow-trend-up">
+    - Respond to quote requests quickly
+    - Include detailed descriptions
+    - Offer competitive pricing
+    - Follow up proactively
+  </Card>
+  
+  <Card title="Faster Conversion" icon="bolt">
+    - Simplify quote-to-invoice process
+    - Make terms clear upfront
+    - Minimize customer decision barriers
+    - Streamline payment collection
+  </Card>
+</CardGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Making Sales" icon="shopping-cart" href="/guides/making-sales">
+    Convert accepted quotes to invoices
+  </Card>
+  
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    Manage customer information for quotes
+  </Card>
+  
+  <Card title="Managing Inventory" icon="boxes" href="/guides/managing-inventory">
+    Ensure quoted products are in stock
+  </Card>
+  
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    Analyze quote performance and trends
+  </Card>
+</CardGroup>

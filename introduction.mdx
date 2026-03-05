@@ -1,0 +1,157 @@
+---
+title: Introduction to Karma POS
+description: A comprehensive Point of Sale system built with Angular 19 and PrimeNG for modern retail businesses
+---
+
+# Introduction to Karma POS
+
+Karma POS is a feature-rich, modern Point of Sale system designed to streamline retail operations for businesses of all sizes. Built with cutting-edge web technologies, it provides a powerful, user-friendly interface for managing sales, inventory, customers, and business operations.
+
+## What is Karma POS?
+
+Karma POS is a web-based Point of Sale application that combines the power of Angular 19 with the elegance of PrimeNG components to deliver a professional, responsive retail management solution. Whether you're running a small shop or managing multiple warehouses, Karma POS provides the tools you need to succeed.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Point of Sale" icon="cash-register">
+    Complete POS interface with barcode scanning, keyboard shortcuts (F2-F5), shopping cart management, and multi-payment method support including cash, credit, and financing options.
+  </Card>
+  
+  <Card title="Inventory Management" icon="boxes">
+    Multi-warehouse inventory tracking with stock reservations, min/max stock levels, bulk import/export via Excel, and real-time stock validation.
+  </Card>
+  
+  <Card title="Customer Management" icon="users">
+    Comprehensive customer database with support for both business and individual clients, purchase history, and customer-specific pricing.
+  </Card>
+  
+  <Card title="Financial Controls" icon="money-bill">
+    Cash register management, invoice generation with PDF export, sales reports, low stock alerts, and detailed financial tracking.
+  </Card>
+  
+  <Card title="Multi-Warehouse" icon="warehouse">
+    Manage inventory across multiple locations with independent stock tracking, transfers, and consolidated reporting.
+  </Card>
+  
+  <Card title="Advanced Features" icon="chart-line">
+    Role-based permissions, real-time updates via SignalR, WhatsApp integration, promotional campaigns, and AI-powered categorization with Google Gemini.
+  </Card>
+</CardGroup>
+
+## Core Modules
+
+### Sales & POS
+- **Point of Sale Interface**: Fast, intuitive checkout with product search, barcode scanning, and quantity management
+- **Multi-Invoice Support**: Handle multiple customers simultaneously with separate shopping carts
+- **Payment Processing**: Support for cash, credit, debit, and financing with installment plans
+- **Invoice Management**: Generate, print, and manage invoices with automatic numbering
+- **Stock Reservations**: Real-time inventory validation and automatic stock reservation during checkout
+
+### Inventory & Products
+- **Product Catalog**: Complete product management with images, barcodes, and multiple references
+- **Category Organization**: Hierarchical category structure with custom extensions
+- **Stock Management**: Track stock levels across warehouses with min/max thresholds
+- **Bulk Operations**: Import and export products via Excel for efficient data management
+- **Low Stock Alerts**: Automatic notifications when inventory falls below minimum levels
+
+### Customer & Supplier Management
+- **Customer Database**: Store customer information including business details, tax IDs, and contact info
+- **Supplier Management**: Track supplier information and purchase orders
+- **Purchase History**: Complete transaction history for each customer
+
+### Financial & Reporting
+- **Cash Register**: Open/close cash register sessions with balance tracking
+- **Sales Reports**: Comprehensive reporting on sales, revenue, and product performance
+- **Invoice History**: Search and retrieve past transactions
+- **Financial Analytics**: Track business performance with detailed metrics
+
+## Technology Stack
+
+Karma POS is built on modern, enterprise-grade technologies:
+
+<Accordion title="Frontend Technologies">
+  - **Angular 19**: Latest version of Google's powerful web framework
+  - **TypeScript 5.6**: Type-safe development with modern JavaScript features
+  - **PrimeNG 19**: Comprehensive UI component library with 80+ components
+  - **RxJS 7.8**: Reactive programming for handling async operations
+  - **Tailwind CSS**: Utility-first CSS framework for custom styling
+</Accordion>
+
+<Accordion title="Core Libraries">
+  - **Chart.js**: Data visualization for sales analytics
+  - **jsPDF & pdfmake**: PDF generation for invoices and reports
+  - **html2canvas**: Screenshot and image generation capabilities
+  - **XLSX**: Excel import/export functionality
+  - **SignalR**: Real-time communication with backend services
+</Accordion>
+
+<Accordion title="Development Tools">
+  - **Angular CLI 19**: Command-line tools for development
+  - **ESLint & Prettier**: Code quality and formatting
+  - **Karma & Jasmine**: Unit testing framework
+  - **Autoprefixer**: Automatic CSS vendor prefixing
+</Accordion>
+
+## Who is Karma POS For?
+
+Karma POS is designed for:
+
+- **Retail Stores**: Clothing, electronics, groceries, and general merchandise
+- **Multi-Location Businesses**: Companies with multiple stores or warehouses
+- **Service Businesses**: Businesses that sell both products and services
+- **Wholesalers**: Bulk sales with customer-specific pricing
+- **Growing Businesses**: Companies that need scalable, feature-rich POS solutions
+
+## System Requirements
+
+<Note>
+  Karma POS is a web application that runs in modern browsers. The following requirements are for development and deployment.
+</Note>
+
+### For Development
+
+- **Node.js**: Version 18.x or higher (recommended: 20.x LTS)
+- **npm**: Version 9.x or higher (comes with Node.js)
+- **Git**: For version control and cloning the repository
+- **Modern Browser**: Chrome, Firefox, Safari, or Edge (latest versions)
+- **Operating System**: Windows 10+, macOS 10.15+, or Linux (Ubuntu 20.04+)
+
+### Hardware Recommendations
+
+- **RAM**: Minimum 4GB (8GB recommended for development)
+- **Storage**: 1GB free space for source code and dependencies
+- **Processor**: Modern multi-core CPU (Intel i5/AMD Ryzen 5 or better)
+
+### Backend Requirements
+
+<Info>
+  Karma POS requires a backend API server for full functionality. The backend should provide:
+  - RESTful API endpoints for data operations
+  - SignalR hub for real-time updates
+  - Database connectivity (SQL Server, MySQL, PostgreSQL, etc.)
+  - Authentication and authorization services
+</Info>
+
+## Localization
+
+Karma POS is configured for Colombian Spanish locale (`es-CO`) by default, with support for:
+
+- Colombian Peso (COP) currency formatting
+- Localized date and number formats
+- Spanish language interface
+- Customizable currency options (USD, EUR, etc.)
+
+## Next Steps
+
+Ready to get started? Continue to the [Quickstart Guide](/quickstart) for a fast setup, or dive into the detailed [Installation Guide](/installation) for comprehensive setup instructions.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get Karma POS running in 5 minutes
+  </Card>
+  
+  <Card title="Installation" icon="download" href="/installation">
+    Detailed setup and configuration guide
+  </Card>
+</CardGroup>

@@ -1,0 +1,378 @@
+---
+title: 'Agent Management'
+description: 'Manage sales agents, assign WhatsApp channels, and configure agent priorities and workloads'
+icon: 'user-headset'
+---
+
+## Overview
+
+The Agent Management system allows you to assign sales representatives and customer service agents to WhatsApp channels. This enables efficient distribution of customer conversations across your team based on workload, priority, and availability.
+
+<Info>
+Agents are system users who are assigned to handle customer conversations through WhatsApp Business integration.
+</Info>
+
+## What are Agents?
+
+Agents in Karma POS are:
+
+- **System Users**: Existing users in your company with assigned roles
+- **WhatsApp Handlers**: Personnel who respond to customer WhatsApp messages
+- **Sales Representatives**: Team members who manage customer relationships
+- **Conversation Owners**: Individuals responsible for specific customer conversations
+
+## Agent Assignment Workflow
+
+<Steps>
+  <Step title="Select WhatsApp Channel">
+    Choose the WhatsApp phone number/channel you want to configure from the channels list.
+  </Step>
+  
+  <Step title="View Current Agents">
+    The system displays all agents currently assigned to the selected channel.
+  </Step>
+  
+  <Step title="Add New Agent">
+    Click **Assign Agent** to open the assignment dialog.
+  </Step>
+  
+  <Step title="Configure Agent Settings">
+    Set the agent parameters:
+    - **Agent/User**: Select from system users
+    - **Priority**: Agent priority level (lower number = higher priority)
+    - **Max Conversations**: Maximum concurrent conversations
+  </Step>
+  
+  <Step title="Save Assignment">
+    Click **Save** to activate the agent on the channel.
+  </Step>
+</Steps>
+
+## Agent Configuration Options
+
+When assigning or editing an agent:
+
+<ParamField path="agentId" type="number" required>
+  The system user ID to assign as an agent
+</ParamField>
+
+<ParamField path="priority" type="number" default="1">
+  Priority level for conversation assignment. Lower numbers indicate higher priority (1 = highest, 10 = lowest).
+</ParamField>
+
+<ParamField path="maxConversations" type="number" default="10">
+  Maximum number of simultaneous conversations the agent can handle.
+</ParamField>
+
+<ParamField path="status" type="boolean" default="true">
+  Whether the agent is active and available for new conversations.
+</ParamField>
+
+## WhatsApp Channel Selection
+
+The agent assignment interface shows:
+
+<CardGroup cols={2}>
+  <Card title="Channel Information" icon="phone">
+    - Phone number
+    - Channel name
+    - Business account details
+    - Active status
+  </Card>
+  
+  <Card title="Assigned Agents" icon="users">
+    - Agent name
+    - Priority level
+    - Max conversations
+    - Current status
+  </Card>
+</CardGroup>
+
+## Agent Priority System
+
+Priority determines the order in which agents receive new conversations:
+
+```typescript
+// Priority assignment logic:
+Priority 1: First to receive new conversations
+Priority 2: Receives conversations after Priority 1 agents are at capacity
+Priority 3+: Backup agents for high-volume periods
+```
+
+<Tip>
+Assign your most experienced agents Priority 1, and use higher priority numbers for training or backup agents.
+</Tip>
+
+## Maximum Conversations
+
+The `maxConversations` setting prevents agent overload:
+
+- System tracks active conversations per agent
+- New conversations route to next available agent when limit reached
+- Helps balance workload across team
+- Ensures quality customer service
+
+<Note>
+An "active" conversation is one that has had activity within the configured time window.
+</Note>
+
+## Agent Assignment Payload
+
+When assigning an agent, the system sends:
+
+```typescript
+{
+  rowid: 0, // 0 for new, >0 for edit
+  rowidUser: agentId,
+  rowidConfiguration: channelId,
+  priority: 1,
+  status: true,
+  maxConversation: 10
+}
+```
+
+## Managing Assigned Agents
+
+### Viewing Assigned Agents
+
+1. Select a WhatsApp channel from the channels list
+2. The assigned agents table automatically loads
+3. View agent details including:
+   - Agent name
+   - Priority
+   - Max conversations
+   - Status
+
+### Editing an Agent
+
+<Steps>
+  <Step title="Locate Agent">
+    Find the agent in the assigned agents table.
+  </Step>
+  
+  <Step title="Click Edit">
+    Click the edit button next to the agent.
+  </Step>
+  
+  <Step title="Modify Settings">
+    Update priority or max conversations as needed.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Save** to update the agent configuration.
+  </Step>
+</Steps>
+
+### Removing an Agent
+
+To remove an agent from a channel:
+
+1. Click the **Remove** or delete button next to the agent
+2. Confirm the removal
+3. The agent is removed from the channel assignment
+
+<Warning>
+Removing an agent doesn't delete the user account, only the channel assignment.
+</Warning>
+
+## System Users Integration
+
+Agents are selected from your company's system users:
+
+- Users must exist in the system before being assigned as agents
+- Create users in the **User Management** module
+- Assign appropriate roles and permissions
+- Then assign them to WhatsApp channels as agents
+
+<Info>
+The system loads all users for your company ID when opening the assignment dialog.
+</Info>
+
+## Multi-Channel Support
+
+Karma POS supports multiple WhatsApp channels:
+
+- Each phone number is a separate channel
+- Agents can be assigned to multiple channels
+- Configure different priorities per channel
+- Manage workload distribution across channels
+
+<Tip>
+Use different agent teams for different product lines or customer segments by assigning them to specific channels.
+</Tip>
+
+## WhatsApp Agent Integration
+
+The agent system integrates with WhatsApp functionality:
+
+- **Conversation Routing**: Automatically assigns conversations to agents
+- **Workload Balancing**: Distributes conversations based on priority and capacity
+- **Agent Availability**: Respects max conversation limits
+- **Real-Time Updates**: Shows agent status and active conversations
+
+## Agent Performance Tracking
+
+While viewing assigned agents, you can monitor:
+
+- Number of assigned agents per channel
+- Agent availability status
+- Distribution of priorities
+- Coverage during business hours
+
+<Note>
+Detailed conversation metrics and agent performance analytics may be available in the WhatsApp module.
+</Note>
+
+## Permission Requirements
+
+Agent management requires specific permissions:
+
+| Permission | Action |
+|------------|--------|
+| `canView` | View assigned agents |
+| `canCreate` | Assign new agents to channels |
+| `canEdit` | Modify agent settings |
+| `canDelete` | Remove agent assignments |
+
+<Info>
+Permissions are configured under the **Agentes** (Agents) module.
+</Info>
+
+## Code Reference
+
+Agent management is implemented in:
+
+- **Component**: `src/app/components/pages/agents/agents.component.ts`
+- **Services**:
+  - `src/app/components/services/whatsapp.service.ts` (agent operations)
+  - `src/app/components/services/master.service.ts` (user data)
+- **Key Endpoints**:
+  - `GET /api/WhatsApp/GetPhoneNumbers` - Get WhatsApp channels
+  - `GET /api/WhatsApp/GetAgents/{configId}` - Get assigned agents
+  - `POST /api/WhatsApp/AssignAgent` - Assign/update agent
+  - `DELETE /api/WhatsApp/DeleteAgent/{id}` - Remove agent assignment
+  - `GET /api/Master/GetUsers/{companiaId}` - Get system users
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Balanced Workload Distribution">
+    Assign priorities to create balanced distribution. Avoid making all agents the same priority unless you want true round-robin distribution.
+  </Accordion>
+  
+  <Accordion title="Realistic Conversation Limits">
+    Set max conversations based on actual agent capacity. Consider:
+    - Experience level
+    - Response time requirements
+    - Conversation complexity
+    - Other responsibilities
+  </Accordion>
+  
+  <Accordion title="Priority Hierarchy">
+    Structure priorities logically:
+    - Priority 1: Senior agents, complex queries
+    - Priority 2: Mid-level agents, standard support
+    - Priority 3+: Junior agents, simple questions
+  </Accordion>
+  
+  <Accordion title="Regular Review">
+    Periodically review agent assignments and performance:
+    - Adjust priorities based on performance
+    - Update max conversations as agents gain experience
+    - Remove inactive agents
+    - Add agents during peak periods
+  </Accordion>
+  
+  <Accordion title="Coverage Planning">
+    Ensure adequate coverage:
+    - Assign multiple agents to each channel
+    - Account for shifts and time zones
+    - Have backup agents configured
+    - Plan for vacation and sick days
+  </Accordion>
+</AccordionGroup>
+
+## Agent Status Management
+
+Each agent has an active/inactive status:
+
+- **Active** (status: true): Receives new conversation assignments
+- **Inactive** (status: false): Maintains existing conversations but receives no new ones
+
+<Tip>
+Temporarily deactivate agents during lunch breaks, meetings, or training sessions rather than removing them entirely.
+</Tip>
+
+## Conversation Assignment Logic
+
+When a new WhatsApp conversation arrives:
+
+<Steps>
+  <Step title="Check Channel">
+    System identifies which channel received the message.
+  </Step>
+  
+  <Step title="Get Active Agents">
+    Retrieves all active agents assigned to that channel.
+  </Step>
+  
+  <Step title="Sort by Priority">
+    Agents are sorted by priority (lowest number first).
+  </Step>
+  
+  <Step title="Check Capacity">
+    System checks each agent's current conversation count against their max.
+  </Step>
+  
+  <Step title="Assign Conversation">
+    First available agent (by priority) under their max limit receives the conversation.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Agent Not Receiving Conversations">
+    Check:
+    - Agent status is active
+    - Max conversations not reached
+    - Priority level vs other agents
+    - Channel selection is correct
+  </Accordion>
+  
+  <Accordion title="Cannot Assign User as Agent">
+    Verify:
+    - User exists in system
+    - User belongs to correct company
+    - User is active
+    - You have permission to assign agents
+  </Accordion>
+  
+  <Accordion title="Changes Not Saving">
+    Ensure:
+    - All required fields are filled
+    - Valid numeric values for priority and max conversations
+    - You have edit permissions
+    - Channel is properly selected
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="WhatsApp Integration" icon="whatsapp" href="/features/whatsapp-integration">
+    Learn about WhatsApp channel configuration and messaging
+  </Card>
+  
+  <Card title="User Management" icon="users" href="/admin/user-permissions">
+    Create and manage system users who can be assigned as agents
+  </Card>
+  
+  <Card title="Conversations" icon="messages" href="/features/whatsapp-integration">
+    View and manage customer conversations handled by agents
+  </Card>
+  
+  <Card title="Permissions" icon="shield" href="/admin/user-permissions">
+    Configure role-based permissions for agent management
+  </Card>
+</CardGroup>

@@ -1,0 +1,663 @@
+---
+title: Installation Guide
+description: Complete installation and setup instructions for Karma POS including prerequisites, configuration, and deployment
+---
+
+# Installation Guide
+
+This comprehensive guide walks you through the complete installation and configuration of Karma POS, from setting up your development environment to deploying in production.
+
+## Prerequisites
+
+Before installing Karma POS, ensure you have the following software and system requirements:
+
+### Required Software
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version**: 18.x or higher (20.x LTS recommended)
+    
+    Download from [nodejs.org](https://nodejs.org/)
+    
+    Verify installation:
+    ```bash
+    node --version  # Should show v18.x or v20.x
+    npm --version   # Should show 9.x or higher
+    ```
+  </Card>
+
+  <Card title="Angular CLI" icon="angular">
+    **Version**: 19.x
+    
+    Install globally:
+    ```bash
+    npm install -g @angular/cli@19
+    ```
+    
+    Verify installation:
+    ```bash
+    ng version  # Should show Angular CLI: 19.0.6
+    ```
+  </Card>
+
+  <Card title="Git" icon="git-alt">
+    **Version**: 2.x or higher
+    
+    Download from [git-scm.com](https://git-scm.com/)
+    
+    Verify installation:
+    ```bash
+    git --version
+    ```
+  </Card>
+
+  <Card title="Code Editor" icon="code">
+    **Recommended**: Visual Studio Code
+    
+    Download from [code.visualstudio.com](https://code.visualstudio.com/)
+    
+    Recommended VS Code extensions:
+    - Angular Language Service
+    - ESLint
+    - Prettier
+  </Card>
+</CardGroup>
+
+### System Requirements
+
+<Tabs>
+  <Tab title="Development">
+    - **OS**: Windows 10+, macOS 10.15+, or Linux (Ubuntu 20.04+)
+    - **RAM**: 8GB minimum (16GB recommended)
+    - **Storage**: 2GB free space
+    - **Processor**: Multi-core CPU (Intel i5/AMD Ryzen 5 or better)
+    - **Browser**: Chrome, Firefox, Safari, or Edge (latest versions)
+  </Tab>
+
+  <Tab title="Production">
+    - **Server**: Linux server (Ubuntu 22.04 LTS recommended)
+    - **Web Server**: Nginx or Apache
+    - **RAM**: 4GB minimum
+    - **Storage**: 5GB free space (including logs and backups)
+    - **Network**: Stable internet connection for API communication
+  </Tab>
+</Tabs>
+
+### Backend Requirements
+
+<Warning>
+  Karma POS requires a backend API server to function. Ensure you have:
+  - Backend API server running and accessible
+  - Database server (SQL Server, MySQL, PostgreSQL, etc.)
+  - SignalR hub for real-time features
+  - Valid API authentication credentials
+</Warning>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Download the Karma POS source code:
+
+    ```bash
+    # Clone via HTTPS
+    git clone https://github.com/your-organization/karma-pos.git
+    
+    # Or clone via SSH
+    git clone git@github.com:your-organization/karma-pos.git
+    
+    # Navigate to project directory
+    cd karma-pos
+    ```
+
+    <Tip>
+      Create a dedicated workspace directory for your projects:
+      ```bash
+      mkdir ~/projects
+      cd ~/projects
+      git clone <repository-url>
+      ```
+    </Tip>
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required npm packages:
+
+    ```bash
+    npm install
+    ```
+
+    This installs the following key dependencies:
+
+    <Accordion title="Core Framework (Angular 19)">
+      - `@angular/core` - Angular framework core
+      - `@angular/common` - Common Angular modules
+      - `@angular/forms` - Form handling
+      - `@angular/router` - Routing and navigation
+      - `@angular/animations` - Animation support
+      - `@angular/platform-browser` - Browser platform
+    </Accordion>
+
+    <Accordion title="UI Components (PrimeNG 19)">
+      - `primeng` - Complete UI component library
+      - `primeicons` - Icon font
+      - `@primeng/themes` - Theming system
+      - `tailwindcss-primeui` - Tailwind integration
+    </Accordion>
+
+    <Accordion title="Business Logic Libraries">
+      - `chart.js` - Sales analytics and reporting
+      - `jspdf` & `pdfmake` - Invoice PDF generation
+      - `html2canvas` - Screenshot capabilities
+      - `xlsx` - Excel import/export
+      - `@microsoft/signalr` - Real-time updates
+      - `crypto-js` - Data encryption
+      - `uuid` - Unique ID generation
+      - `ngx-cookie-service` - Session management
+    </Accordion>
+
+    <Info>
+      Installation typically takes 2-5 minutes. You'll see progress bars as packages are downloaded and installed.
+    </Info>
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Create environment configuration files for different environments:
+
+    ```bash
+    # Create environment files directory if it doesn't exist
+    mkdir -p src/environments
+    ```
+
+    Create `src/environments/environment.development.ts` for development:
+
+    ```typescript
+    export const environment = {
+      production: false,
+      apiUrl: 'http://localhost:5000/api',
+      signalRUrl: 'http://localhost:5000/hubs',
+      appName: 'Karma POS',
+      version: '1.0.0',
+      enableDebug: true
+    };
+    ```
+
+    Create `src/environments/environment.ts` for production:
+
+    ```typescript
+    export const environment = {
+      production: true,
+      apiUrl: 'https://api.yourcompany.com/api',
+      signalRUrl: 'https://api.yourcompany.com/hubs',
+      appName: 'Karma POS',
+      version: '1.0.0',
+      enableDebug: false
+    };
+    ```
+
+    <Warning>
+      Never commit sensitive credentials or API keys to version control. Use environment variables or secure configuration management.
+    </Warning>
+  </Step>
+
+  <Step title="Verify Installation">
+    Test that everything is installed correctly:
+
+    ```bash
+    # Check Angular CLI version
+    ng version
+    
+    # Should output:
+    # Angular CLI: 19.0.6
+    # Node: 20.x.x
+    # Package Manager: npm 10.x.x
+    # Angular: 19.0.0
+    ```
+
+    Start the development server:
+
+    ```bash
+    ng serve
+    ```
+
+    Wait for compilation to complete, then verify:
+    - ✅ No compilation errors
+    - ✅ Server running on `http://localhost:4200`
+    - ✅ Browser can access the application
+
+    <Tip>
+      Use `ng serve --open` to automatically open the application in your default browser.
+    </Tip>
+  </Step>
+</Steps>
+
+## Initial Configuration
+
+After installation, complete the initial setup wizard to configure your Karma POS instance.
+
+### Setup Wizard
+
+<Steps>
+  <Step title="Access Setup Wizard">
+    On first launch, you'll see the Initial Setup screen. The wizard has 3 steps:
+
+    1. **Company Information**
+    2. **Contact & Location Details**  
+    3. **Owner & Tax Information**
+
+    <Info>
+      The setup wizard saves your progress to `localStorage`, so you can complete it in multiple sessions.
+    </Info>
+  </Step>
+
+  <Step title="Step 1: Company Information">
+    Enter your basic business information:
+
+    ```typescript
+    {
+      companyName: 'Your Business Name',
+      businessType: 'Retail' | 'Wholesale' | 'Service',
+      currency: 'COP' | 'USD' | 'EUR',
+      timezone: 'America/Bogota'
+    }
+    ```
+
+    **Currency Options:**
+    - **COP** - Colombian Peso (default)
+    - **USD** - US Dollar
+    - **EUR** - Euro
+
+    **Timezone Options:**
+    - `America/Bogota` (GMT-5) - Colombia
+    - `America/Mexico_City` (GMT-6) - Mexico
+    - `America/New_York` (GMT-5) - US East Coast
+  </Step>
+
+  <Step title="Step 2: Contact & Location">
+    Provide contact information and business address:
+
+    ```typescript
+    {
+      address: '123 Main Street, Suite 100',
+      phone: '+57 300 123 4567',
+      email: 'contact@yourbusiness.com'
+    }
+    ```
+
+    <Note>
+      Email must be valid format. The wizard validates email addresses before allowing you to proceed.
+    </Note>
+  </Step>
+
+  <Step title="Step 3: Owner & Tax Information">
+    Complete registration with legal information:
+
+    ```typescript
+    {
+      ownerName: 'Business Owner Name',
+      taxId: 'NIT or Tax ID Number'
+    }
+    ```
+
+    Click **Complete Setup** to save configuration.
+  </Step>
+</Steps>
+
+### Configuration Reference
+
+The initial setup creates a configuration stored in `localStorage`:
+
+```typescript
+interface SetupData {
+  companyName: string;
+  businessType: string;
+  address: string;
+  phone: string;
+  email: string;
+  taxId: string;
+  ownerName: string;
+  currency: 'USD' | 'COP' | 'EUR';
+  timezone: string;
+}
+```
+
+Access from code:
+```typescript
+const setupData = JSON.parse(localStorage.getItem('pos-setup') || '{}');
+const companyInfo = JSON.parse(localStorage.getItem('pos-company') || '{}');
+```
+
+## Database & Backend Setup
+
+<Warning>
+  Karma POS requires a backend API for data persistence and business logic. Coordinate with your backend team to ensure:
+</Warning>
+
+### Backend Endpoints Required
+
+The frontend expects these API endpoint categories:
+
+<AccordionGroup>
+  <Accordion title="Authentication & Authorization">
+    - `POST /api/auth/login` - User login
+    - `POST /api/auth/logout` - User logout
+    - `GET /api/auth/permissions` - User permissions by module
+    - `POST /api/auth/refresh` - Refresh authentication token
+  </Accordion>
+
+  <Accordion title="Inventory Management">
+    - `GET /api/inventory/products` - Get all products
+    - `POST /api/inventory/products` - Create/update product
+    - `POST /api/inventory/products/bulk` - Bulk import products
+    - `GET /api/inventory/products/store` - Get products for POS
+    - `POST /api/inventory/stock/reserve` - Reserve/release stock
+  </Accordion>
+
+  <Accordion title="Sales & Invoices">
+    - `POST /api/pos/invoice` - Create invoice
+    - `GET /api/pos/invoices` - Get invoices list
+    - `POST /api/pos/cancel` - Cancel invoice/release stock
+    - `GET /api/pos/invoice/:id` - Get invoice details
+  </Accordion>
+
+  <Accordion title="Master Data">
+    - `GET /api/master/customers` - Get customers
+    - `POST /api/master/customers` - Create/update customer
+    - `GET /api/master/categories` - Get product categories
+    - `GET /api/master/warehouses` - Get warehouses
+    - `GET /api/master/suppliers` - Get suppliers
+    - `GET /api/master/configuration` - Get system configuration
+  </Accordion>
+
+  <Accordion title="Reports & Analytics">
+    - `GET /api/reports/sales` - Sales reports
+    - `GET /api/reports/inventory` - Inventory reports
+    - `GET /api/reports/low-stock` - Low stock alerts
+    - `GET /api/reports/cash-register` - Cash register reports
+  </Accordion>
+</AccordionGroup>
+
+### SignalR Configuration
+
+For real-time features, configure SignalR hub:
+
+```typescript
+import * as signalR from '@microsoft/signalr';
+
+const connection = new signalR.HubConnectionBuilder()
+  .withUrl('http://localhost:5000/hubs/pos')
+  .withAutomaticReconnect()
+  .build();
+
+connection.start()
+  .then(() => console.log('SignalR Connected'))
+  .catch(err => console.error('SignalR Error:', err));
+```
+
+## Advanced Configuration
+
+### Printer Settings
+
+Configure thermal receipt printers:
+
+```typescript
+interface PrinterSettings {
+  width: number;      // Paper width in mm (80mm standard)
+  marginTop: number;  // Top margin in mm
+  copies: number;     // Number of copies to print
+  port: string;       // Printer port (USB001, COM1, etc.)
+}
+```
+
+### AI Integration (Google Gemini)
+
+Enable AI-powered features:
+
+```typescript
+interface AISettings {
+  geminiKey: string;         // Google Gemini API key
+  autoCategorize: boolean;   // Auto-categorize products
+  salesAnalysis: boolean;    // AI sales insights
+}
+```
+
+### Digital Ocean Spaces (Image Storage)
+
+Configure cloud storage for product images:
+
+```typescript
+interface DigitalOceanSettings {
+  accessKey: string;    // DO Spaces access key
+  secretKey: string;    // DO Spaces secret key  
+  serviceUrl: string;   // Spaces endpoint URL
+  bucketName: string;   // Bucket/Space name
+  url: string;          // CDN URL for images
+}
+```
+
+## Building for Production
+
+<Steps>
+  <Step title="Build Production Bundle">
+    Create optimized production build:
+
+    ```bash
+    ng build --configuration production
+    ```
+
+    This generates optimized files in `dist/sakai-ng/` with:
+    - ✅ Minified JavaScript bundles
+    - ✅ CSS optimization and purging
+    - ✅ Asset optimization
+    - ✅ Source maps (optional)
+    - ✅ AOT (Ahead-of-Time) compilation
+
+    <Info>
+      Production builds take 1-3 minutes depending on your machine. The output will be significantly smaller than development builds.
+    </Info>
+  </Step>
+
+  <Step title="Configure Web Server">
+    Deploy the built files to your web server.
+
+    <Tabs>
+      <Tab title="Nginx">
+        Create Nginx configuration:
+
+        ```nginx
+        server {
+            listen 80;
+            server_name pos.yourcompany.com;
+            root /var/www/karma-pos/dist/sakai-ng/browser;
+            index index.html;
+
+            # Angular routing
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+
+            # Cache static assets
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+            }
+
+            # Gzip compression
+            gzip on;
+            gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+        }
+        ```
+
+        Enable and reload:
+        ```bash
+        sudo ln -s /etc/nginx/sites-available/karma-pos /etc/nginx/sites-enabled/
+        sudo nginx -t
+        sudo systemctl reload nginx
+        ```
+      </Tab>
+
+      <Tab title="Apache">
+        Create Apache virtual host:
+
+        ```apache
+        <VirtualHost *:80>
+            ServerName pos.yourcompany.com
+            DocumentRoot /var/www/karma-pos/dist/sakai-ng/browser
+
+            <Directory /var/www/karma-pos/dist/sakai-ng/browser>
+                Options Indexes FollowSymLinks
+                AllowOverride All
+                Require all granted
+                
+                # Angular routing
+                RewriteEngine On
+                RewriteBase /
+                RewriteRule ^index\.html$ - [L]
+                RewriteCond %{REQUEST_FILENAME} !-f
+                RewriteCond %{REQUEST_FILENAME} !-d
+                RewriteRule . /index.html [L]
+            </Directory>
+        </VirtualHost>
+        ```
+
+        Enable and reload:
+        ```bash
+        sudo a2ensite karma-pos
+        sudo a2enmod rewrite
+        sudo systemctl reload apache2
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="SSL Certificate">
+    Secure your application with HTTPS:
+
+    ```bash
+    # Using Let's Encrypt (Certbot)
+    sudo certbot --nginx -d pos.yourcompany.com
+    
+    # Or for Apache
+    sudo certbot --apache -d pos.yourcompany.com
+    ```
+
+    <Warning>
+      Always use HTTPS in production to protect sensitive customer and financial data.
+    </Warning>
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Installation Issues">
+    **Problem**: npm install fails with permission errors
+    
+    **Solution**:
+    ```bash
+    # Don't use sudo with npm! Fix permissions instead:
+    sudo chown -R $USER:$USER ~/.npm
+    npm cache clean --force
+    npm install
+    ```
+
+    **Problem**: Dependency conflicts
+    
+    **Solution**:
+    ```bash
+    # Use legacy peer deps resolution
+    npm install --legacy-peer-deps
+    ```
+  </Accordion>
+
+  <Accordion title="Build Errors">
+    **Problem**: TypeScript compilation errors
+    
+    **Solution**:
+    ```bash
+    # Update TypeScript
+    npm install typescript@5.6.2 --save-dev
+    
+    # Clear Angular cache
+    rm -rf .angular
+    
+    # Rebuild
+    ng build --configuration production
+    ```
+
+    **Problem**: Memory errors during build
+    
+    **Solution**:
+    ```bash
+    # Increase Node.js memory limit
+    export NODE_OPTIONS="--max-old-space-size=4096"
+    ng build --configuration production
+    ```
+  </Accordion>
+
+  <Accordion title="Runtime Issues">
+    **Problem**: API connection errors
+    
+    **Solution**:
+    1. Check backend API is running
+    2. Verify API URL in environment configuration
+    3. Check CORS configuration on backend
+    4. Verify network connectivity
+    5. Check browser console for specific error messages
+
+    **Problem**: SignalR not connecting
+    
+    **Solution**:
+    1. Verify SignalR hub URL
+    2. Check WebSocket support in browser
+    3. Verify firewall/proxy allows WebSocket connections
+    4. Check SignalR hub is running on backend
+  </Accordion>
+
+  <Accordion title="Performance Issues">
+    **Problem**: Slow initial load
+    
+    **Solution**:
+    1. Enable lazy loading for feature modules
+    2. Optimize bundle size with `ng build --stats-json`
+    3. Analyze with webpack-bundle-analyzer
+    4. Enable Gzip compression on web server
+    5. Use CDN for static assets
+
+    **Problem**: Slow runtime performance
+    
+    **Solution**:
+    1. Use OnPush change detection strategy
+    2. Implement virtual scrolling for large lists
+    3. Optimize Angular change detection
+    4. Use trackBy functions in *ngFor
+    5. Profile with Chrome DevTools Performance tab
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you have Karma POS installed and configured:
+
+<CardGroup cols={3}>
+  <Card title="User Guide" icon="book-open">
+    Learn how to use Karma POS features
+  </Card>
+  
+  <Card title="API Documentation" icon="code">
+    Integrate with the backend API
+  </Card>
+  
+  <Card title="Customization" icon="palette">
+    Customize themes and branding
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter issues not covered in this guide:
+
+- Check the [GitHub Issues](https://github.com/your-organization/karma-pos/issues) for known problems
+- Review the [Angular Documentation](https://angular.dev/) for framework-specific questions
+- Consult the [PrimeNG Documentation](https://primeng.org/) for UI component usage
+- Contact your development team or system administrator

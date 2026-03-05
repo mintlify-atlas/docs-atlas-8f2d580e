@@ -1,0 +1,939 @@
+---
+title: "Promotions & Discounts"
+description: "Create and manage flexible promotion campaigns with multiple discount types"
+icon: "tags"
+---
+
+## Overview
+
+Karma POS provides a powerful promotion engine that allows you to create various types of discounts and special offers. The system supports percentage discounts, fixed amounts, buy-X-get-Y deals, and product bundles with flexible targeting by categories or individual products.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multiple Discount Types" icon="percent">
+    Percentage, fixed amount, buy-X-get-Y, and bundle promotions
+  </Card>
+  <Card title="Flexible Targeting" icon="bullseye">
+    Apply promotions to specific categories or individual products
+  </Card>
+  <Card title="Date Ranges" icon="calendar">
+    Schedule promotions with start and end dates
+  </Card>
+  <Card title="Usage Tracking" icon="chart-line">
+    Monitor promotion usage and effectiveness
+  </Card>
+</CardGroup>
+
+## Promotion Types
+
+### 1. Percentage Discount
+
+Apply a percentage discount to selected products or categories:
+
+```typescript
+const percentagePromotion: Promotion = {
+  name: '20% Off Electronics',
+  description: 'Summer sale on all electronics',
+  type: 'percentage',
+  value: 20, // 20% discount
+  startDate: '2026-06-01',
+  endDate: '2026-06-30',
+  isActive: true,
+  categoryIds: [1, 2], // Electronics categories
+  productIds: []
+};
+```
+
+**Validation:** Value must be between 0 and 100
+
+### 2. Fixed Amount Discount
+
+Apply a fixed currency discount:
+
+```typescript
+const fixedPromotion: Promotion = {
+  name: '$10 Off Orders Over $50',
+  description: 'Save $10 on purchases above $50',
+  type: 'fixed_amount',
+  value: 10, // $10 discount
+  minPurchase: 50, // Minimum purchase amount
+  maxDiscount: 10, // Maximum discount allowed
+  startDate: '2026-03-01',
+  endDate: '2026-03-31',
+  isActive: true,
+  categoryIds: [], // Applies to all
+  productIds: []
+};
+```
+
+**Validation:** Discount value must be less than minimum purchase amount
+
+### 3. Buy X Get Y
+
+Offer free items when customers buy specific products:
+
+```typescript
+const buyXGetYPromotion: Promotion = {
+  name: 'Buy 2 Sodas Get 1 Free',
+  description: 'Purchase 2 sodas and receive 1 free',
+  type: 'buy_x_get_y',
+  value: 0, // Not used for this type
+  buyY: 1, // Number of free items
+  startDate: '2026-03-01',
+  endDate: '2026-03-31',
+  isActive: true,
+  
+  // Products/categories that qualify for the purchase
+  categoryIds: [5], // Beverages category
+  productIds: [],
+  
+  // Products/categories that can be claimed for free
+  freeCategoryIds: [5], // Same category
+  freeProductIds: []
+};
+```
+
+**Reference:** `promotions.component.ts:350`
+
+### 4. Bundle Promotion
+
+Create product bundles with special pricing:
+
+```typescript
+const bundlePromotion: Promotion = {
+  name: 'Family Meal Bundle',
+  description: 'Complete family meal for $25',
+  type: 'bundle',
+  value: 25, // Bundle price
+  startDate: '2026-03-01',
+  endDate: '2026-03-31',
+  isActive: true,
+  productIds: [101, 102, 103, 104] // Specific products in bundle
+};
+```
+
+## Data Model
+
+```typescript
+export interface Promotion {
+  id?: number;
+  companiaId?: number;
+  userId?: number;
+  name: string;
+  description?: string;
+  type: "percentage" | "fixed_amount" | "buy_x_get_y" | "bundle";
+  value?: number;
+  minPurchase?: number;  // For fixed_amount type
+  maxDiscount?: number;  // For fixed_amount type
+  buyY?: number;         // For buy_x_get_y type
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  usageLimit?: number;
+  usageCount?: number;
+  createdBy?: number;
+  createdAt?: string;
+  deleted?: boolean;
+  
+  // Products/categories for purchase (what needs to be bought)
+  categoryIds?: number[];
+  categories?: any[];
+  productIds?: number[];
+  products?: any[];
+  
+  // For buy_x_get_y: what customer gets for free
+  freeCategoryIds?: number[];
+  freeProductIds?: number[];
+}
+```
+
+**Reference:** `promotions.ts:1`
+
+## Creating Promotions
+
+### Opening the Create Dialog
+
+```typescript
+openAddDialog() {
+  this.isEditing = false;
+  this.currentPromotion = this.getEmptyPromotion();
+  this.buyXBy = 'category';
+  this.freeYBy = 'category';
+  this.startDateModel = new Date();
+  this.endDateModel = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  this.showAddDialog = true;
+}
+```
+
+**Reference:** `promotions.component.ts:331`
+
+### Handling Promotion Type Changes
+
+Different fields are enabled based on promotion type:
+
+```typescript
+onPromotionTypeChange() {
+  const t = this.currentPromotion.type;
+  
+  // Initialize arrays
+  if (!this.currentPromotion.categoryIds) 
+    this.currentPromotion.categoryIds = [];
+  if (!this.currentPromotion.productIds) 
+    this.currentPromotion.productIds = [];
+  if (!this.currentPromotion.freeCategoryIds) 
+    this.currentPromotion.freeCategoryIds = [];
+  if (!this.currentPromotion.freeProductIds) 
+    this.currentPromotion.freeProductIds = [];
+  
+  switch (t) {
+    case 'buy_x_get_y':
+      this.buyXBy = 'category';
+      this.freeYBy = 'category';
+      this.currentPromotion.minPurchase = undefined;
+      this.currentPromotion.maxDiscount = undefined;
+      if (this.currentPromotion.buyY == null || 
+          this.currentPromotion.buyY < 1) {
+        this.currentPromotion.buyY = 1;
+      }
+      break;
+      
+    case 'percentage':
+    case 'fixed_amount':
+      this.currentPromotion.freeCategoryIds = [];
+      this.currentPromotion.freeProductIds = [];
+      this.currentPromotion.buyY = undefined;
+      break;
+      
+    case 'bundle':
+      this.currentPromotion.minPurchase = undefined;
+      this.currentPromotion.maxDiscount = undefined;
+      this.currentPromotion.buyY = undefined;
+      this.currentPromotion.freeCategoryIds = [];
+      this.currentPromotion.freeProductIds = [];
+      break;
+  }
+}
+```
+
+**Reference:** `promotions.component.ts:342`
+
+### Saving Promotions
+
+Validate and save promotion to the backend:
+
+```typescript
+savePromotion() {
+  // Validate required fields
+  if (!this.currentPromotion.name?.trim()) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'El nombre es obligatorio' 
+    });
+    return;
+  }
+  
+  if (!this.currentPromotion.description?.trim()) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'La descripción es obligatoria' 
+    });
+    return;
+  }
+  
+  if (this.currentPromotion.value === undefined || 
+      this.currentPromotion.value <= 0) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'El valor debe ser mayor a 0' 
+    });
+    return;
+  }
+  
+  // Get dates from models
+  const startDate = this.startDateModel || 
+    (this.currentPromotion.startDate ? 
+      new Date(this.currentPromotion.startDate) : null);
+  const endDate = this.endDateModel || 
+    (this.currentPromotion.endDate ? 
+      new Date(this.currentPromotion.endDate) : null);
+  
+  if (!startDate || !endDate) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Las fechas de inicio y fin son obligatorias' 
+    });
+    return;
+  }
+  
+  if (endDate < startDate) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'La fecha de fin debe ser posterior a la fecha de inicio' 
+    });
+    return;
+  }
+  
+  // Type-specific validation
+  if (this.currentPromotion.type === 'percentage' && 
+      this.currentPromotion.value > 100) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'El porcentaje no puede ser mayor a 100%' 
+    });
+    return;
+  }
+  
+  if (this.currentPromotion.type === 'fixed_amount' && 
+      this.currentPromotion.minPurchase && 
+      this.currentPromotion.value >= this.currentPromotion.minPurchase) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'El descuento debe ser menor al monto mínimo de compra' 
+    });
+    return;
+  }
+  
+  // Validate buy_x_get_y
+  if (this.currentPromotion.type === 'buy_x_get_y') {
+    if (!this.currentPromotion.buyY || this.currentPromotion.buyY < 1) {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'Debe especificar la cantidad de productos que se llevan gratis (Y)' 
+      });
+      return;
+    }
+    
+    const hasBuyItems = this.buyXBy === 'category'
+      ? (this.currentPromotion.categoryIds?.length ?? 0) > 0
+      : (this.currentPromotion.productIds?.length ?? 0) > 0;
+    
+    if (!hasBuyItems) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: this.buyXBy === 'category' 
+          ? 'Seleccione al menos una categoría por compra.' 
+          : 'Seleccione al menos un producto por compra.'
+      });
+      return;
+    }
+    
+    const hasFreeItems = this.freeYBy === 'category'
+      ? (this.currentPromotion.freeCategoryIds?.length ?? 0) > 0
+      : (this.currentPromotion.freeProductIds?.length ?? 0) > 0;
+    
+    if (!hasFreeItems) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: this.freeYBy === 'category' 
+          ? 'Seleccione al menos una categoría que se regala.' 
+          : 'Seleccione al menos un producto que se regala.'
+      });
+      return;
+    }
+  }
+  
+  // Prepare promotion data
+  const norm = (ids: number[] | undefined) => 
+    (ids ?? [])
+      .map(id => typeof id === 'string' ? parseInt(id as any, 10) : id)
+      .filter(id => !isNaN(id as number));
+  
+  const isBuyXGetY = this.currentPromotion.type === 'buy_x_get_y';
+  
+  const promotionToSave: Promotion = {
+    ...this.currentPromotion,
+    companiaId: this.companiaId,
+    userId: this.userId,
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0],
+    isActive: this.currentPromotion.isActive !== null && 
+              this.currentPromotion.isActive !== undefined 
+              ? Boolean(this.currentPromotion.isActive) : true,
+    categoryIds: isBuyXGetY && this.buyXBy === 'category' 
+      ? norm(this.currentPromotion.categoryIds) 
+      : (isBuyXGetY ? [] : norm(this.currentPromotion.categoryIds)),
+    productIds: isBuyXGetY && this.buyXBy === 'product' 
+      ? norm(this.currentPromotion.productIds) 
+      : (isBuyXGetY ? [] : norm(this.currentPromotion.productIds)),
+    freeCategoryIds: isBuyXGetY && this.freeYBy === 'category' 
+      ? norm(this.currentPromotion.freeCategoryIds) 
+      : (isBuyXGetY ? [] : norm(this.currentPromotion.freeCategoryIds)),
+    freeProductIds: isBuyXGetY && this.freeYBy === 'product' 
+      ? norm(this.currentPromotion.freeProductIds) 
+      : (isBuyXGetY ? [] : norm(this.currentPromotion.freeProductIds)),
+  };
+  
+  // Call API
+  const operation = this.isEditing 
+    ? this.promotionsService.updatePromotion(promotionToSave)
+    : this.promotionsService.createPromotion(promotionToSave);
+  
+  this.loading = true;
+  operation.subscribe({
+    next: (res) => {
+      this.loading = false;
+      if (res.code === 0) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: this.isEditing 
+            ? 'Promoción actualizada correctamente.' 
+            : 'Promoción creada correctamente.'
+        });
+        this.showAddDialog = false;
+        this.loadPromotions();
+        this.resetCurrentPromotion();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: res.message
+        });
+      }
+    },
+    error: () => {
+      this.loading = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo guardar la promoción.'
+      });
+    }
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:532`
+
+## Loading Promotions
+
+Load promotions from the backend with normalization:
+
+```typescript
+loadPromotions() {
+  this.loading = true;
+  this.promotionsService.getPromotions(this.companiaId).subscribe({
+    next: (res) => {
+      this.promotions = (res.data || []).map(p => {
+        // Normalize categoryIds
+        let categoryIds: number[] = [];
+        if (p.categoryIds && p.categoryIds.length > 0) {
+          categoryIds = p.categoryIds
+            .map(id => typeof id === 'string' ? parseInt(id, 10) : id)
+            .filter(id => !isNaN(id));
+        } else if (p.categories && p.categories.length > 0) {
+          categoryIds = p.categories
+            .map((c: any) => c.id)
+            .filter((id: any) => id != null)
+            .map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id)
+            .filter((id: any) => !isNaN(id));
+        }
+        
+        // Normalize productIds
+        let productIds: number[] = [];
+        if (p.productIds && p.productIds.length > 0) {
+          productIds = p.productIds
+            .map(id => typeof id === 'string' ? parseInt(id, 10) : id)
+            .filter(id => !isNaN(id));
+        } else if (p.products && p.products.length > 0) {
+          productIds = p.products
+            .map((pr: any) => pr.id)
+            .filter((id: any) => id != null)
+            .map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id)
+            .filter((id: any) => !isNaN(id));
+        }
+        
+        return {
+          ...p,
+          startDate: p.startDate 
+            ? (typeof p.startDate === 'string' 
+              ? p.startDate 
+              : new Date(p.startDate as any).toISOString().split('T')[0]) 
+            : undefined,
+          endDate: p.endDate 
+            ? (typeof p.endDate === 'string' 
+              ? p.endDate 
+              : new Date(p.endDate as any).toISOString().split('T')[0]) 
+            : undefined,
+          categoryIds: categoryIds,
+          productIds: productIds
+        };
+      });
+      this.loading = false;
+    },
+    error: () => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudieron cargar las promociones.'
+      });
+      this.loading = false;
+    }
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:201`
+
+## Category and Product Selection
+
+### Selecting Categories
+
+```typescript
+onCategoryChange(categoryId: number, event: any) {
+  if (event.checked) {
+    if (!this.currentPromotion.categoryIds) {
+      this.currentPromotion.categoryIds = [];
+    }
+    if (!this.currentPromotion.categoryIds.includes(categoryId)) {
+      this.currentPromotion.categoryIds = 
+        [...this.currentPromotion.categoryIds, categoryId];
+    }
+  } else {
+    this.currentPromotion.categoryIds = 
+      this.currentPromotion.categoryIds?.filter(c => c !== categoryId) || [];
+  }
+}
+
+isCategorySelected(categoryId: number | undefined): boolean {
+  if (!this.currentPromotion.categoryIds) {
+    this.currentPromotion.categoryIds = [];
+  }
+  
+  if (!categoryId && categoryId !== 0) return false;
+  
+  const normalizedCategoryId = typeof categoryId === 'string' 
+    ? parseInt(categoryId, 10) 
+    : Number(categoryId);
+  
+  if (isNaN(normalizedCategoryId)) return false;
+  
+  return this.currentPromotion.categoryIds.some(id => {
+    const normalizedId = typeof id === 'string' 
+      ? parseInt(String(id), 10) 
+      : Number(id);
+    return !isNaN(normalizedId) && normalizedId === normalizedCategoryId;
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:776`
+
+### Selecting Products
+
+```typescript
+onProductChange(productId: number, event: any) {
+  if (event.checked) {
+    if (!this.currentPromotion.productIds) {
+      this.currentPromotion.productIds = [];
+    }
+    if (!this.currentPromotion.productIds.includes(productId)) {
+      this.currentPromotion.productIds = 
+        [...this.currentPromotion.productIds, productId];
+    }
+  } else {
+    this.currentPromotion.productIds = 
+      this.currentPromotion.productIds?.filter(p => p !== productId) || [];
+  }
+}
+
+isProductSelected(productId: number | undefined): boolean {
+  if (!this.currentPromotion.productIds || !productId) return false;
+  
+  const normalizedProductId = typeof productId === 'string' 
+    ? parseInt(productId, 10) 
+    : productId;
+  
+  return this.currentPromotion.productIds.some(id => {
+    const normalizedId = typeof id === 'string' 
+      ? parseInt(id, 10) 
+      : id;
+    return normalizedId === normalizedProductId;
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:816`
+
+## Editing Promotions
+
+Load full promotion data for editing:
+
+```typescript
+editPromotion(promotion: Promotion) {
+  if (!promotion.id) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se puede editar una promoción sin ID.'
+    });
+    return;
+  }
+  
+  this.isEditing = true;
+  this.loading = true;
+  
+  // Load full promotion from backend
+  this.promotionsService
+    .getPromotionById(promotion.id, this.companiaId)
+    .subscribe({
+      next: (res) => {
+        this.loading = false;
+        if (res.data && res.data.length > 0) {
+          const fullPromotion = res.data[0];
+          
+          // Normalize IDs and create deep copy
+          this.currentPromotion = { 
+            ...fullPromotion,
+            companiaId: this.companiaId,
+            categoryIds: /* normalized */,
+            productIds: /* normalized */,
+            freeCategoryIds: /* normalized */,
+            freeProductIds: /* normalized */,
+            isActive: Boolean(fullPromotion.isActive)
+          };
+          
+          // Set selection modes
+          this.buyXBy = categoryIds.length > 0 ? 'category' : 'product';
+          this.freeYBy = freeCategoryIds.length > 0 ? 'category' : 'product';
+          
+          // Convert dates to Date objects
+          if (this.currentPromotion.startDate) {
+            this.startDateModel = new Date(this.currentPromotion.startDate);
+          }
+          if (this.currentPromotion.endDate) {
+            this.endDateModel = new Date(this.currentPromotion.endDate);
+          }
+          
+          this.showAddDialog = true;
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar la promoción para editar.'
+        });
+      }
+    });
+}
+```
+
+**Reference:** `promotions.component.ts:385`
+
+## Toggling Promotion Status
+
+Activate or deactivate promotions:
+
+```typescript
+togglePromotionStatus(promotion: Promotion) {
+  if (!promotion.id) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se puede cambiar el estado de una promoción sin ID.'
+    });
+    return;
+  }
+  
+  this.promotionToToggle = promotion;
+  this.newStatus = !promotion.isActive;
+  this.showConfirmStatusDialog = true;
+}
+
+confirmToggleStatus() {
+  if (!this.promotionToToggle || !this.promotionToToggle.id) return;
+  
+  const promotionToUpdate: Promotion = {
+    ...this.promotionToToggle,
+    companiaId: this.companiaId,
+    isActive: this.newStatus
+  };
+  
+  this.loading = true;
+  this.showConfirmStatusDialog = false;
+  
+  this.promotionsService.updatePromotion(promotionToUpdate).subscribe({
+    next: (res) => {
+      this.loading = false;
+      if (res.code === 0) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `Promoción ${this.newStatus ? 'activada' : 'desactivada'} correctamente.`
+        });
+        this.loadPromotions();
+      }
+      this.promotionToToggle = null;
+    },
+    error: () => {
+      this.loading = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: `No se pudo ${this.newStatus ? 'activar' : 'desactivar'} la promoción.`
+      });
+      this.promotionToToggle = null;
+    }
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:968`
+
+## Deleting Promotions
+
+```typescript
+deletePromotion(promotion: Promotion) {
+  if (!confirm(`¿Eliminar la promoción "${promotion.name}"?`)) return;
+  
+  this.promotionsService.deletePromotion(promotion).subscribe({
+    next: (res) => {
+      if (res.code === 0) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Eliminado',
+          detail: 'Promoción eliminada correctamente.'
+        });
+        this.loadPromotions();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: res.message
+        });
+      }
+    },
+    error: () => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo eliminar la promoción.'
+      });
+    }
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:502`
+
+## Statistics and Metrics
+
+Display promotion statistics:
+
+```typescript
+get activePromotions(): number {
+  return this.promotions.filter((p) => p.isActive).length;
+}
+
+get totalUsage(): number {
+  return this.promotions.reduce(
+    (sum, p) => sum + (p.usageCount || 0), 0
+  );
+}
+
+get expiringSoon(): number {
+  return this.promotions.filter((p) => {
+    if (!p.endDate) return false;
+    const endDate = new Date(p.endDate);
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7 && diffDays > 0;
+  }).length;
+}
+```
+
+**Reference:** `promotions.component.ts:308`
+
+## Filtering Promotions
+
+Filter by search term and type:
+
+```typescript
+get filteredPromotions(): Promotion[] {
+  return this.promotions.filter((promotion) => {
+    const matchesSearch = promotion.name
+      .toLowerCase()
+      .includes(this.searchTerm.toLowerCase());
+    const matchesType = this.selectedType === 'all' || 
+                        promotion.type === this.selectedType;
+    return matchesSearch && matchesType;
+  });
+}
+```
+
+**Reference:** `promotions.component.ts:768`
+
+## Display Utilities
+
+### Badge Labels
+
+```typescript
+getPromotionTypeBadge(type: string): string {
+  switch (type) {
+    case 'percentage': return 'Porcentaje';
+    case 'fixed_amount': return 'Monto Fijo';
+    case 'buy_x_get_y': return 'Compra X Lleva Y';
+    case 'bundle': return 'Combo';
+    default: return type;
+  }
+}
+```
+
+**Reference:** `promotions.component.ts:721`
+
+### Badge Severity
+
+```typescript
+getPromotionTypeBadgeSeverity(type: string): 
+  'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+  switch (type) {
+    case 'percentage': return 'info';
+    case 'fixed_amount': return 'warn';
+    case 'buy_x_get_y': return 'success';
+    case 'bundle': return 'contrast';
+    default: return 'secondary';
+  }
+}
+```
+
+**Reference:** `promotions.component.ts:737`
+
+### Icon Classes
+
+```typescript
+getPromotionIconClass(type: string): string {
+  switch (type) {
+    case 'percentage': return 'pi pi-percent';
+    case 'fixed_amount': return 'pi pi-tag';
+    case 'buy_x_get_y': return 'pi pi-gift';
+    case 'bundle': return 'pi pi-star';
+    default: return 'pi pi-tag';
+  }
+}
+```
+
+**Reference:** `promotions.component.ts:753`
+
+## Permissions
+
+The promotions module uses role-based access control:
+
+```typescript
+private applyPermissions(): void {
+  const moduleName = 'Promociones';
+  const permission = this.permissions.find(
+    (p) => p.module === moduleName
+  );
+  
+  if (!permission) {
+    this.resetPermissions();
+    return;
+  }
+  
+  this.canView = permission.canView;
+  this.canCreate = permission.canCreate;
+  this.canEdit = permission.canEdit;
+  this.canDelete = permission.canDelete;
+  this.canExport = permission.canExport;
+}
+```
+
+**Reference:** `promotions.component.ts:173`
+
+## API Reference
+
+### Promotions Service
+
+```typescript
+class PromotionsService {
+  getPromotions(companiaId: number): Observable<ApiResponse<Promotion[]>>
+  getPromotionById(id: number, companiaId: number): Observable<ApiResponse<Promotion[]>>
+  createPromotion(model: Promotion): Observable<ApiResponse<any>>
+  updatePromotion(model: Promotion): Observable<ApiResponse<any>>
+  deletePromotion(model: Promotion): Observable<ApiResponse<any>>
+}
+```
+
+**Reference:** `promotions.service.ts:8`
+
+### Endpoints
+
+<ResponseField name="GET /api/Promotion/GetPromotions/{companiaId}" type="endpoint">
+  Get all promotions for a company
+</ResponseField>
+
+<ResponseField name="GET /api/Promotion/GetPromotionById/{id}/{companiaId}" type="endpoint">
+  Get a specific promotion by ID
+</ResponseField>
+
+<ResponseField name="POST /api/Promotion/CreatePromotion" type="endpoint">
+  Create a new promotion
+</ResponseField>
+
+<ResponseField name="PUT /api/Promotion/UpdatePromotion" type="endpoint">
+  Update an existing promotion
+</ResponseField>
+
+<ResponseField name="DELETE /api/Promotion/DeletePromotion" type="endpoint">
+  Delete a promotion (soft delete)
+</ResponseField>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Date Range Management">
+    Always set meaningful start and end dates. Ensure end dates are after start dates, and consider setting alerts for promotions expiring soon.
+  </Accordion>
+  
+  <Accordion title="Buy-X-Get-Y Configuration">
+    When creating buy-X-get-Y promotions, clearly define which products/categories trigger the promotion and which can be claimed for free. Test thoroughly to avoid confusion.
+  </Accordion>
+  
+  <Accordion title="Percentage Validation">
+    For percentage promotions, ensure values don't exceed 100%. Consider setting reasonable limits (e.g., max 80%) to prevent loss.
+  </Accordion>
+  
+  <Accordion title="Fixed Amount Limits">
+    For fixed amount discounts, always set a minimum purchase amount and maximum discount to control costs and prevent abuse.
+  </Accordion>
+  
+  <Accordion title="Usage Tracking">
+    Monitor promotion usage counts to evaluate effectiveness and set usage limits for expensive promotions.
+  </Accordion>
+</AccordionGroup>
+
+## Integration with Sales
+
+Promotions are automatically applied during checkout when:
+- Promotion is active (`isActive = true`)
+- Current date is within promotion date range
+- Cart contains qualifying products or categories
+- Usage limit has not been exceeded
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Sales & Checkout" icon="cash-register" href="/features/sales-invoicing">
+    Apply promotions during checkout
+  </Card>
+  <Card title="Products & Inventory" icon="box" href="/features/inventory-management">
+    Manage products eligible for promotions
+  </Card>
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    Analyze promotion effectiveness
+  </Card>
+</CardGroup>

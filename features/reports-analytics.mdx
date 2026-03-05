@@ -1,0 +1,657 @@
+---
+title: "Reports & Analytics"
+description: "Comprehensive sales analytics, inventory reports, and financial summaries"
+icon: "chart-line"
+---
+
+## Overview
+
+Karma POS provides powerful reporting and analytics capabilities to help you understand your business performance. The system offers real-time sales data, inventory insights, financial summaries, and export capabilities for deeper analysis.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Analytics" icon="bolt">
+    View live sales data and performance metrics
+  </Card>
+  <Card title="Period Comparison" icon="calendar">
+    Compare performance across different time periods
+  </Card>
+  <Card title="Category Insights" icon="chart-pie">
+    Analyze sales by product categories
+  </Card>
+  <Card title="Export Options" icon="download">
+    Export reports to Excel and PDF formats
+  </Card>
+</CardGroup>
+
+## Data Model
+
+The reports system uses the following data structures:
+
+```typescript
+export interface SalesPeriodData {
+  sales: number;        // Total sales amount
+  transactions: number; // Number of transactions
+  customers: number;    // Unique customers
+  avgTicket: number;    // Average transaction value
+}
+
+export interface SalesDataCollection {
+  today: SalesPeriodData;
+  week: SalesPeriodData;
+  month: SalesPeriodData;
+}
+
+export interface TopProduct {
+  name: string;   // Product name
+  sales: number;  // Units sold
+  revenue: number; // Total revenue
+  growth: number;  // Growth percentage
+}
+
+export interface CategorySales {
+  category: string;   // Category name
+  amount: number;     // Sales amount
+  percentage: number; // Percentage of total
+  color: string;      // Display color
+}
+```
+
+**Reference:** `reports.ts:3`
+
+## Component Overview
+
+The reports component provides a dashboard view with key metrics:
+
+```typescript
+@Component({
+  selector: 'app-reports',
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardModule,
+    ButtonModule,
+    DropdownModule,
+    TableModule,
+    TagModule,
+  ],
+  templateUrl: './reports.component.html',
+  styleUrl: './reports.component.scss'
+})
+export class ReportsComponent implements OnInit {
+  selectedPeriod: string = 'today';
+  
+  periodOptions = [
+    { label: 'Hoy', value: 'today' },
+    { label: 'Esta Semana', value: 'week' },
+    { label: 'Este Mes', value: 'month' },
+  ];
+  
+  salesData: SalesDataCollection = {
+    today: { sales: 1247.5, transactions: 47, customers: 32, avgTicket: 26.54 },
+    week: { sales: 8732.25, transactions: 324, customers: 198, avgTicket: 26.95 },
+    month: { sales: 34567.8, transactions: 1256, customers: 743, avgTicket: 27.52 },
+  };
+  
+  get currentData(): SalesPeriodData {
+    return this.salesData[this.selectedPeriod as keyof SalesDataCollection];
+  }
+}
+```
+
+**Reference:** `reports.component.ts:24`
+
+## Sales Overview
+
+### Period Selection
+
+Users can switch between different time periods:
+
+```typescript
+periodOptions = [
+  { label: 'Hoy', value: 'today' },
+  { label: 'Esta Semana', value: 'week' },
+  { label: 'Este Mes', value: 'month' },
+];
+```
+
+**Reference:** `reports.component.ts:27`
+
+### Current Period Data
+
+Access the currently selected period's data:
+
+```typescript
+get currentData(): SalesPeriodData {
+  return this.salesData[
+    this.selectedPeriod as keyof SalesDataCollection
+  ];
+}
+```
+
+**Reference:** `reports.component.ts:61`
+
+## Key Metrics
+
+The dashboard displays essential business metrics:
+
+### Sales Performance
+
+<ParamField path="sales" type="number">
+  Total sales amount for the selected period
+  
+  **Example:** `$1,247.50` (today), `$8,732.25` (week), `$34,567.80` (month)
+</ParamField>
+
+<ParamField path="transactions" type="number">
+  Total number of completed transactions
+  
+  **Example:** `47` (today), `324` (week), `1,256` (month)
+</ParamField>
+
+<ParamField path="customers" type="number">
+  Number of unique customers served
+  
+  **Example:** `32` (today), `198` (week), `743` (month)
+</ParamField>
+
+<ParamField path="avgTicket" type="number">
+  Average transaction value
+  
+  **Calculation:** `sales / transactions`
+  
+  **Example:** `$26.54` (today), `$26.95` (week), `$27.52` (month)
+</ParamField>
+
+## Top Products Report
+
+Track best-selling products with revenue and growth metrics:
+
+```typescript
+topProducts: TopProduct[] = [
+  { 
+    name: 'Coca Cola 350ml', 
+    sales: 156,           // Units sold
+    revenue: 390.0,       // Total revenue
+    growth: 12            // Growth percentage
+  },
+  { 
+    name: 'Pan Integral Bimbo', 
+    sales: 89, 
+    revenue: 333.75, 
+    growth: -5 
+  },
+  { 
+    name: 'Leche Entera 1L', 
+    sales: 67, 
+    revenue: 281.4, 
+    growth: 8 
+  },
+  { 
+    name: 'Café Juan Valdez', 
+    sales: 34, 
+    revenue: 289.0, 
+    growth: 15 
+  },
+  { 
+    name: 'Arroz Diana 500g', 
+    sales: 45, 
+    revenue: 126.0, 
+    growth: 3 
+  },
+];
+```
+
+**Reference:** `reports.component.ts:39`
+
+### Growth Indicators
+
+The growth percentage shows product performance trends:
+- **Positive growth** (e.g., `+12%`) indicates increasing sales
+- **Negative growth** (e.g., `-5%`) indicates decreasing sales
+- **Zero or near-zero growth** indicates stable sales
+
+## Category Sales Analysis
+
+Analyze sales distribution across product categories:
+
+```typescript
+categorySales: CategorySales[] = [
+  { 
+    category: 'Bebidas',      // Beverages
+    amount: 456.75,           // Sales amount
+    percentage: 36.6,         // % of total sales
+    color: 'bg-blue-500'      // Display color
+  },
+  { 
+    category: 'Lácteos',      // Dairy
+    amount: 324.2, 
+    percentage: 26.0, 
+    color: 'bg-green-500' 
+  },
+  { 
+    category: 'Panadería',    // Bakery
+    amount: 198.3, 
+    percentage: 15.9, 
+    color: 'bg-yellow-500' 
+  },
+  { 
+    category: 'Granos',       // Grains
+    amount: 156.45, 
+    percentage: 12.5, 
+    color: 'bg-purple-500' 
+  },
+  { 
+    category: 'Otros',        // Others
+    amount: 111.8, 
+    percentage: 9.0, 
+    color: 'bg-gray-500' 
+  },
+];
+```
+
+**Reference:** `reports.component.ts:47`
+
+### Percentage Calculation
+
+Category percentage is calculated as:
+
+```
+percentage = (category_amount / total_sales) * 100
+```
+
+For example, if Beverages generated $456.75 out of $1,247.50 total:
+```
+percentage = (456.75 / 1247.50) * 100 = 36.6%
+```
+
+## Utility Pipes
+
+The reports module includes custom pipes for data formatting:
+
+### Absolute Value Pipe
+
+```typescript
+@Pipe({
+  name: 'abs',
+  standalone: true
+})
+export class AbsPipe implements PipeTransform {
+  transform(value: number): number {
+    return Math.abs(value);
+  }
+}
+```
+
+**Usage:** Convert negative growth values to positive for display
+
+**Reference:** `reports.component.ts:72`
+
+## Report Types
+
+Karma POS supports various report types:
+
+<AccordionGroup>
+  <Accordion title="Sales Reports">
+    **Daily Sales Summary**
+    - Total sales by day
+    - Transaction count
+    - Average ticket size
+    - Payment method breakdown
+    
+    **Sales by Period**
+    - Weekly, monthly, yearly comparisons
+    - Trend analysis
+    - Growth rates
+    
+    **Sales by Employee**
+    - Individual performance tracking
+    - Commission calculations
+    - Top performers
+  </Accordion>
+  
+  <Accordion title="Inventory Reports">
+    **Stock Levels**
+    - Current inventory quantities
+    - Low stock alerts
+    - Overstock identification
+    
+    **Inventory Valuation**
+    - Total inventory value
+    - Value by category
+    - Cost vs. retail value
+    
+    **Movement Reports**
+    - Product turnover rates
+    - Fast vs. slow movers
+    - Dead stock analysis
+  </Accordion>
+  
+  <Accordion title="Financial Reports">
+    **Profit & Loss**
+    - Revenue breakdown
+    - Cost of goods sold
+    - Operating expenses
+    - Net profit/loss
+    
+    **Cash Flow**
+    - Cash in/out tracking
+    - Payment method totals
+    - Daily cash reconciliation
+    
+    **Tax Reports**
+    - Taxable sales
+    - Tax collected
+    - Tax remittance tracking
+  </Accordion>
+  
+  <Accordion title="Customer Reports">
+    **Customer Analytics**
+    - New vs. returning customers
+    - Customer lifetime value
+    - Purchase frequency
+    
+    **Top Customers**
+    - Highest spending customers
+    - Most frequent buyers
+    - Customer segmentation
+    
+    **Loyalty Analysis**
+    - Points earned/redeemed
+    - Redemption rates
+    - Program effectiveness
+  </Accordion>
+</AccordionGroup>
+
+## Export Capabilities
+
+Karma POS includes export functionality for further analysis:
+
+### Excel Export
+
+The system uses libraries mentioned in dependencies for Excel export:
+- Export raw data for pivot tables and analysis
+- Formatted reports with charts
+- Multi-sheet workbooks for complex reports
+
+### PDF Export
+
+Generate professional PDF reports:
+- Print-ready formatted documents
+- Charts and visualizations included
+- Company branding and headers
+- Signature fields for approval
+
+**Library Used:** pdfMake (referenced in financing component)
+
+**Example from Financing Module:**
+```typescript
+import * as pdfMakeModule from 'pdfmake/build/pdfmake';
+import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
+
+const pdfMake: any = (pdfMakeModule as any).default || pdfMakeModule;
+const pdfFonts: any = (pdfFontsModule as any).default || pdfFontsModule;
+pdfMake.vfs = pdfFonts.pdfMake?.vfs || pdfFonts.vfs;
+
+// Generate PDF
+pdfMake.createPdf(docDefinition).open();
+```
+
+**Reference:** `financing.component.ts:15`
+
+## Dashboard Visualization
+
+The reports component displays data using PrimeNG components:
+
+### Cards for KPIs
+
+Key metrics are displayed in card format:
+- **Sales**: Total revenue with trend indicator
+- **Transactions**: Number of sales with daily average
+- **Customers**: Unique customer count with growth
+- **Avg Ticket**: Average transaction value with comparison
+
+### Tables for Detailed Data
+
+Detailed data is presented in sortable, filterable tables:
+- Top products with sales and growth
+- Category breakdowns with percentages
+- Customer rankings
+- Transaction history
+
+### Tags for Status
+
+Status indicators using color-coded tags:
+- Growth status (positive/negative)
+- Stock levels (in stock/low/out)
+- Payment status (paid/pending)
+
+## Real-Time Updates
+
+While the current implementation uses static data, the system is designed for real-time updates:
+
+```typescript
+// Future implementation
+ngOnInit() {
+  this.loadReportData();
+  
+  // Refresh data every 5 minutes
+  interval(5 * 60 * 1000).subscribe(() => {
+    this.loadReportData();
+  });
+}
+
+loadReportData() {
+  this.reportsService.getSalesData(this.selectedPeriod).subscribe({
+    next: (data) => {
+      this.salesData[this.selectedPeriod] = data;
+    }
+  });
+}
+```
+
+## Filtering and Date Ranges
+
+Extend the reports system with custom date ranges:
+
+```typescript
+// Extended period options
+periodOptions = [
+  { label: 'Hoy', value: 'today' },
+  { label: 'Ayer', value: 'yesterday' },
+  { label: 'Esta Semana', value: 'week' },
+  { label: 'Semana Pasada', value: 'last_week' },
+  { label: 'Este Mes', value: 'month' },
+  { label: 'Mes Pasado', value: 'last_month' },
+  { label: 'Este Año', value: 'year' },
+  { label: 'Personalizado', value: 'custom' }
+];
+```
+
+## Integration with Other Modules
+
+### Sales Module Integration
+
+Reports pull data from completed sales transactions:
+- Transaction amounts
+- Payment methods
+- Items sold
+- Customer information
+
+### Inventory Module Integration
+
+Inventory reports access:
+- Current stock levels
+- Product movements
+- Purchase orders
+- Stock adjustments
+
+### Financing Module Integration
+
+Financial reports include:
+- Outstanding credit
+- Payment schedules
+- Collected vs. pending amounts
+- Financing terms and interest
+
+### Promotions Module Integration
+
+Promotion effectiveness reports show:
+- Redemption rates
+- Revenue impact
+- Most used promotions
+- ROI calculations
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Data Accuracy">
+    Ensure all transactions are properly recorded with complete information. Missing data can lead to inaccurate reports and poor business decisions.
+  </Accordion>
+  
+  <Accordion title="Regular Monitoring">
+    Review reports daily to identify trends early. Set up alerts for unusual activity or when key metrics deviate from expected ranges.
+  </Accordion>
+  
+  <Accordion title="Comparative Analysis">
+    Always compare current performance against previous periods (week-over-week, month-over-month, year-over-year) to identify trends.
+  </Accordion>
+  
+  <Accordion title="Export for Deep Dives">
+    Use Excel exports for detailed analysis and pivot tables. PDF exports are best for sharing with stakeholders who need formatted reports.
+  </Accordion>
+  
+  <Accordion title="Custom Date Ranges">
+    Extend the system to support custom date ranges for special analysis periods (e.g., holiday seasons, promotional periods).
+  </Accordion>
+</AccordionGroup>
+
+## Performance Optimization
+
+For large datasets, consider:
+
+### Data Aggregation
+
+Pre-aggregate data on the backend:
+```typescript
+// Backend aggregation example
+GET /api/Reports/SalesSummary?period=month&groupBy=day
+
+// Returns pre-calculated daily totals for the month
+```
+
+### Lazy Loading
+
+Load detailed data on demand:
+```typescript
+// Load summary first
+loadSummary();
+
+// Load details when user clicks
+onViewDetails(category: string) {
+  this.loadCategoryDetails(category);
+}
+```
+
+### Caching
+
+Cache frequently accessed reports:
+```typescript
+private reportCache = new Map<string, any>();
+
+getReport(key: string) {
+  if (this.reportCache.has(key)) {
+    return of(this.reportCache.get(key));
+  }
+  
+  return this.reportsService.getReport(key).pipe(
+    tap(data => this.reportCache.set(key, data))
+  );
+}
+```
+
+## Future Enhancements
+
+Potential enhancements for the reports module:
+
+<CardGroup cols={2}>
+  <Card title="Scheduled Reports" icon="clock">
+    Automatically email reports daily, weekly, or monthly
+  </Card>
+  <Card title="Custom Dashboards" icon="dashboard">
+    Let users create personalized dashboard views
+  </Card>
+  <Card title="Predictive Analytics" icon="crystal-ball">
+    Use historical data to forecast future sales
+  </Card>
+  <Card title="Advanced Visualizations" icon="chart-mixed">
+    Add more chart types and interactive visualizations
+  </Card>
+</CardGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Sales & Checkout" icon="cash-register" href="/features/sales-invoicing">
+    Transaction data source for reports
+  </Card>
+  <Card title="Inventory Management" icon="box" href="/features/inventory-management">
+    Stock and movement reports
+  </Card>
+  <Card title="Financing" icon="credit-card" href="/features/financing">
+    Credit and payment reports
+  </Card>
+  <Card title="Promotions" icon="tags" href="/features/promotions">
+    Promotion effectiveness analysis
+  </Card>
+</CardGroup>
+
+## API Integration
+
+While the current implementation uses mock data, the system is designed to integrate with backend APIs:
+
+```typescript
+// Future service implementation
+@Injectable({ providedIn: 'root' })
+export class ReportsService {
+  private apiUrl = 'https://localhost:7197/api/';
+  
+  constructor(private http: HttpClient) {}
+  
+  getSalesSummary(period: string): Observable<SalesPeriodData> {
+    return this.http.get<SalesPeriodData>(
+      `${this.apiUrl}Reports/SalesSummary?period=${period}`
+    );
+  }
+  
+  getTopProducts(period: string, limit: number = 10): 
+    Observable<TopProduct[]> {
+    return this.http.get<TopProduct[]>(
+      `${this.apiUrl}Reports/TopProducts?period=${period}&limit=${limit}`
+    );
+  }
+  
+  getCategorySales(period: string): Observable<CategorySales[]> {
+    return this.http.get<CategorySales[]>(
+      `${this.apiUrl}Reports/CategorySales?period=${period}`
+    );
+  }
+  
+  exportToExcel(reportType: string, filters: any): Observable<Blob> {
+    return this.http.post(
+      `${this.apiUrl}Reports/ExportExcel`,
+      { reportType, filters },
+      { responseType: 'blob' }
+    );
+  }
+  
+  exportToPDF(reportType: string, filters: any): Observable<Blob> {
+    return this.http.post(
+      `${this.apiUrl}Reports/ExportPDF`,
+      { reportType, filters },
+      { responseType: 'blob' }
+    );
+  }
+}
+```

@@ -1,0 +1,575 @@
+---
+title: Managing Inventory
+description: Add products, update stock levels, and manage your inventory in Karma POS
+icon: boxes
+---
+
+## Overview
+
+The Inventory module allows you to manage your product catalog, track stock levels across multiple warehouses, set minimum and maximum stock thresholds, and perform bulk operations.
+
+## Accessing Inventory
+
+Navigate to **Inventory** from the main menu. You'll see:
+
+- Product list with current stock levels
+- Filter and search tools
+- Summary cards (total items, total value, low stock alerts)
+- Add/Edit/Export buttons
+
+## Product List Overview
+
+The inventory table displays:
+
+- Product code (SKU)
+- Name and description
+- Reference and barcode
+- Category
+- Price
+- Total stock across all warehouses
+- Stock status indicators
+- Action buttons (Edit, Delete)
+
+<Info>
+Products are color-coded by stock status: Green (good), Yellow (low), Red (critical).
+</Info>
+
+## Adding New Products
+
+<Steps>
+  <Step title="Open Add Dialog">
+    Click the **Add Product** button in the inventory toolbar.
+  </Step>
+  
+  <Step title="Enter Basic Information">
+    Fill in the product details:
+    - **Name**: Product name (required)
+    - **Description**: Detailed product description
+    - **Reference**: Internal reference code
+    - **Barcode**: Product barcode/EAN for scanning
+    - **Category**: Select from existing categories
+    - **Unit of Measure**: kg, units, liters, etc.
+  </Step>
+  
+  <Step title="Set Extensions (Optional)">
+    Use extension fields for additional classification:
+    - **Extension 1**: Size, color, brand, etc.
+    - **Extension 2**: Secondary classification
+  </Step>
+  
+  <Step title="Configure Pricing">
+    - **Price**: Selling price (required)
+    - Discounts are configured separately in promotions
+  </Step>
+  
+  <Step title="Upload Product Image">
+    - Click the image upload button
+    - Select an image file
+    - Image uploads to Digital Ocean Spaces (configured in settings)
+    - Preview appears in the form
+  </Step>
+  
+  <Step title="Enable Stock Management">
+    Toggle **Manage Stock**:
+    - **ON**: System tracks inventory levels and prevents overselling
+    - **OFF**: Product can be sold without quantity limits (services, made-to-order items)
+  </Step>
+  
+  <Step title="Configure Warehouse Stock">
+    For each warehouse in your system:
+    - **Initial Stock**: Starting quantity
+    - **Minimum Stock**: Alert threshold (triggers low stock warning)
+    - **Maximum Stock**: Target stock level for reordering
+    
+    The warehouse list automatically includes all configured warehouses.
+  </Step>
+  
+  <Step title="Save Product">
+    Click **Save**. The system:
+    - Generates a unique product code
+    - Creates stock records for each warehouse
+    - Sets up min/max thresholds
+    - Makes product immediately available in POS
+  </Step>
+</Steps>
+
+<Tip>
+If you have AI categorization enabled (Gemini API key configured), the system can suggest categories based on product name and description.
+</Tip>
+
+## Editing Products
+
+<Steps>
+  <Step title="Select Product">
+    Click the **Edit** icon next to any product in the list.
+  </Step>
+  
+  <Step title="Modify Details">
+    The edit dialog opens with current values pre-filled:
+    - Update any product information
+    - Modify warehouse stock levels
+    - Adjust min/max thresholds
+    - Change prices
+  </Step>
+  
+  <Step title="Warehouse Stock Adjustment">
+    When editing stock quantities:
+    - **Increase**: Adds to available inventory
+    - **Decrease**: Reduces inventory (validates against reserved stock)
+    - Changes affect real-time availability
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Save** to apply updates. Changes are immediate and reflected in:
+    - POS interface
+    - Stock reports
+    - Low stock alerts
+  </Step>
+</Steps>
+
+<Warning>
+Changing stock quantities directly here bypasses purchase orders. Use this for corrections and adjustments only. For new stock arrivals, use the Purchases module.
+</Warning>
+
+## Managing Product Details
+
+### Product Information Fields
+
+| Field | Purpose | Example |
+|-------|---------|--------|
+| **Code** | Auto-generated unique ID | SKU-1234 |
+| **Name** | Product display name | Coca Cola 350ml |
+| **Reference** | Your internal reference | REF-COCA-350 |
+| **Barcode** | EAN/UPC for scanning | 7501234567890 |
+| **Extension 1** | Primary attribute | Bottle, Red, Medium |
+| **Extension 2** | Secondary attribute | 6-pack, Promo |
+| **Category** | Product classification | Beverages |
+| **Unit Measure** | Quantity type | Units, kg, liters |
+| **Price** | Selling price | $1500 |
+| **Active** | Product availability | Yes/No |
+| **Manage Stock** | Inventory tracking | Yes/No |
+
+### Product Image Management
+
+Images are stored in Digital Ocean Spaces:
+
+1. **Upload**: Images are converted to base64 during upload
+2. **Storage**: Automatically saved to configured bucket
+3. **Retrieval**: Image URL constructed from bucket settings
+4. **Display**: Shows in POS, receipts, and reports
+
+<Info>
+Configure Digital Ocean credentials in **Settings > General Configuration** before uploading images.
+</Info>
+
+## Stock Management Across Warehouses
+
+### Viewing Stock by Warehouse
+
+Each product can have stock in multiple warehouses:
+
+<Steps>
+  <Step title="Warehouse Stock Display">
+    In the edit dialog, you'll see a list of all warehouses with:
+    - Warehouse name
+    - Current stock quantity
+    - Minimum stock threshold
+    - Maximum stock threshold
+  </Step>
+  
+  <Step title="Stock Status Indicators">
+    - **Green**: Stock above minimum
+    - **Yellow**: Stock near minimum (within 20%)
+    - **Red**: Stock below minimum
+  </Step>
+</Steps>
+
+### Stock Thresholds
+
+#### Minimum Stock (Min)
+
+When stock falls below this level:
+- Product appears in "Low Stock" alerts
+- System highlights the item
+- Triggers reorder reminders (if configured)
+
+#### Maximum Stock (Max)
+
+The target stock level:
+- Used for purchase order calculations
+- Helps prevent overstock
+- Guides inventory planning
+
+### Stock Adjustments
+
+Use the inventory edit feature for:
+
+- **Physical inventory corrections**: After counting stock
+- **Damage/loss**: Reducing stock for damaged goods
+- **Found inventory**: Adding previously uncounted items
+- **Transfer corrections**: Fixing transfer errors
+
+<Warning>
+Stock adjustments don't create transaction records. For full traceability, use the Purchases module for stock increases and Sales for stock decreases.
+</Warning>
+
+## Transferring Stock Between Warehouses
+
+While not directly shown in the inventory interface, you can:
+
+<Steps>
+  <Step title="Method 1: Manual Adjustment">
+    1. Edit product
+    2. Decrease stock in source warehouse
+    3. Increase stock in destination warehouse
+    4. Save changes
+  </Step>
+  
+  <Step title="Method 2: Using Purchases">
+    Create a "transfer" purchase order from one warehouse to another (recommended for audit trail).
+  </Step>
+</Steps>
+
+## Filtering and Searching Products
+
+### Search Options
+
+<Steps>
+  <Step title="Quick Search">
+    Use the search bar to find products by:
+    - Product name
+    - Reference code
+    - Barcode
+  </Step>
+  
+  <Step title="Advanced Filters">
+    Apply multiple filters simultaneously:
+    - **Category**: Filter by product category
+    - **Extension 1**: Filter by primary attribute
+    - **Unit Measure**: Filter by measurement type
+    - **Active Status**: Show only active or inactive products
+    - **Price Range**: Min and max price filters
+  </Step>
+  
+  <Step title="Reset Filters">
+    Click **Reset Filters** to clear all filters and show the complete inventory.
+  </Step>
+</Steps>
+
+### Sorting
+
+Click column headers to sort by:
+- Product code
+- Name
+- Price
+- Stock quantity
+- Category
+
+## Bulk Operations
+
+### Exporting Inventory to Excel
+
+<Steps>
+  <Step title="Apply Filters (Optional)">
+    Filter the list to show only products you want to export.
+  </Step>
+  
+  <Step title="Click Export">
+    Click the **Export to Excel** button.
+  </Step>
+  
+  <Step title="Download File">
+    The system generates an Excel file with:
+    - All product details
+    - Stock levels per warehouse (dynamic columns)
+    - Min/max thresholds per warehouse
+    - Current values for all fields
+  </Step>
+</Steps>
+
+The exported file is named: `Inventario_Compania_{ID}.xlsx`
+
+### Importing Products from Excel
+
+<Steps>
+  <Step title="Prepare Excel File">
+    Use the exported template or create a file with these columns:
+    - ID (0 for new products)
+    - Nombre (Name)
+    - Referencia (Reference)
+    - Código Barras (Barcode)
+    - Categoría ID
+    - Extension 1
+    - Extension 2
+    - Precio (Price)
+    - Unidad Medida ID
+    - Maneja Stock (SI/NO)
+    - Activo (SI/NO)
+    - Stock - (Warehouse Name) (for each warehouse)
+    - Min - (Warehouse Name)
+    - Max - (Warehouse Name)
+  </Step>
+  
+  <Step title="Upload File">
+    1. Click the **Import** button
+    2. Select your Excel file
+    3. System reads and validates the data
+  </Step>
+  
+  <Step title="Processing">
+    The system:
+    - Creates new products (ID = 0)
+    - Updates existing products (ID > 0)
+    - Sets stock levels for all warehouses
+    - Configures min/max thresholds
+    - Shows progress and success message
+  </Step>
+  
+  <Step title="Verify Import">
+    Check the inventory list to confirm:
+    - Products were created/updated
+    - Stock levels are correct
+    - All data imported properly
+  </Step>
+</Steps>
+
+<Warning>
+**Import Tips:**
+- IDs must match existing products for updates
+- Use ID = 0 for new products
+- Category IDs must exist in your system
+- SI/NO values are case-sensitive
+- Warehouse names must exactly match configured names
+</Warning>
+
+## Low Stock Management
+
+### Low Stock Dashboard
+
+The inventory page shows:
+
+- **Total Items**: Total inventory count across all products and warehouses
+- **Total Value**: Sum of (stock × price) for all products
+- **Low Stock Items**: Count of products below minimum threshold
+
+### Viewing Low Stock Items
+
+Products with stock ≤ 5 units (or below min threshold) appear in the low stock list:
+
+1. Navigate to the Low Stock section
+2. See products that need reordering
+3. Click to edit and review warehouse levels
+4. Create purchase orders as needed
+
+<Info>
+Low stock detection considers total stock across all warehouses. A product is flagged if the combined stock is ≤ 5 units.
+</Info>
+
+## Product Status Management
+
+### Active vs Inactive Products
+
+**Active Products**:
+- Appear in POS search
+- Available for sale
+- Included in reports
+- Default filter view
+
+**Inactive Products**:
+- Hidden from POS
+- Cannot be sold
+- Retained in system for history
+- Viewable by toggling filter
+
+<Steps>
+  <Step title="Deactivate a Product">
+    1. Edit the product
+    2. Toggle **Active** to OFF
+    3. Save changes
+  </Step>
+  
+  <Step title="Reactivate a Product">
+    1. Change filter to show inactive products
+    2. Edit the product
+    3. Toggle **Active** to ON
+    4. Save changes
+  </Step>
+</Steps>
+
+<Warning>
+Deactivating a product with existing stock doesn't remove the inventory. Consider selling or transferring stock before deactivation.
+</Warning>
+
+## Category and Classification
+
+### Managing Categories
+
+Categories are managed in the Master Data module, but used extensively in inventory:
+
+- **Group similar products**: Beverages, Snacks, Cleaning, etc.
+- **Enable better filtering**: Quick product location
+- **Support reporting**: Category-wise sales analysis
+- **Assist AI features**: Auto-categorization with Gemini
+
+### Using Extensions
+
+Extensions provide flexible product attributes:
+
+**Extension 1 Examples**:
+- Size (Small, Medium, Large)
+- Color (Red, Blue, Green)
+- Brand name
+- Flavor variant
+
+**Extension 2 Examples**:
+- Package type (Box, Bottle, Can)
+- Special marking (Organic, Premium)
+- Seasonal tag (Summer, Holiday)
+
+## Inventory Calculations
+
+### Total Stock Calculation
+
+For each product:
+```
+Total Stock = Sum of stock across all warehouses
+```
+
+### Total Value Calculation
+
+```
+Total Inventory Value = Σ (Product Stock × Product Price)
+```
+
+### Stock Status Logic
+
+```
+if (totalStock <= minStock):
+    status = "Critical" (Red)
+else if (totalStock <= minStock * 1.2):
+    status = "Low" (Yellow)
+else:
+    status = "Good" (Green)
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Accurate Data Entry" icon="check-double">
+    - Use consistent naming conventions
+    - Always fill in barcodes for scannable items
+    - Add references for easy lookup
+    - Upload quality product images
+  </Card>
+  
+  <Card title="Stock Thresholds" icon="gauge-high">
+    - Set realistic min/max values
+    - Review thresholds quarterly
+    - Adjust based on sales velocity
+    - Account for lead times
+  </Card>
+  
+  <Card title="Regular Audits" icon="clipboard-check">
+    - Perform physical counts monthly/quarterly
+    - Correct discrepancies immediately
+    - Document adjustment reasons
+    - Use purchases module for new stock
+  </Card>
+  
+  <Card title="Organization" icon="folder-tree">
+    - Create meaningful categories
+    - Use extensions consistently
+    - Keep product names clear
+    - Maintain clean, updated data
+  </Card>
+</CardGroup>
+
+## Common Workflows
+
+### Adding a New Product
+
+1. Click "Add Product"
+2. Enter name, barcode, price
+3. Select category
+4. Set initial stock for main warehouse
+5. Set min/max thresholds
+6. Upload image
+7. Save
+
+### Updating Prices
+
+1. Filter/search for products
+2. Edit each product
+3. Update price field
+4. Save changes
+5. Verify in POS
+
+### Correcting Stock After Physical Count
+
+1. Export current inventory
+2. Perform physical count
+3. Compare counts to export
+4. Edit products with discrepancies
+5. Update stock quantities
+6. Save corrections
+
+### Bulk Adding Similar Products
+
+1. Add one product with complete details
+2. Export inventory
+3. Copy row in Excel
+4. Modify copied rows (change ID to 0, update name, barcode, etc.)
+5. Import updated Excel
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Product Not Appearing in POS">
+    - Verify product is **Active**
+    - Check if stock is available
+    - Ensure product has a price set
+    - Confirm category is not filtered out
+  </Accordion>
+  
+  <Accordion title="Image Not Uploading">
+    - Check Digital Ocean configuration in Settings
+    - Verify credentials (Access Key, Secret Key)
+    - Confirm bucket name and service URL
+    - Ensure image file size is reasonable (< 5MB)
+  </Accordion>
+  
+  <Accordion title="Import Fails">
+    - Verify Excel column names match exactly
+    - Check Category IDs exist in system
+    - Ensure Unit Measure IDs are valid
+    - Confirm SI/NO values are uppercase
+    - Validate warehouse names are exact matches
+  </Accordion>
+  
+  <Accordion title="Stock Levels Don't Update">
+    - Refresh the page
+    - Check if stock management is enabled for product
+    - Verify warehouse ID is correct
+    - Look for error messages in browser console
+  </Accordion>
+</AccordionGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Making Sales" icon="shopping-cart" href="/guides/making-sales">
+    How sales affect inventory levels
+  </Card>
+  
+  <Card title="Low Stock Reports" icon="triangle-exclamation" href="/features/reports-analytics">
+    Monitor and respond to low stock
+  </Card>
+  
+  <Card title="Purchase Orders" icon="file-invoice" href="/guides/purchases">
+    Properly receive new inventory
+  </Card>
+  
+  <Card title="Master Data" icon="database" href="/admin/company-settings">
+    Manage categories and warehouses
+  </Card>
+</CardGroup>

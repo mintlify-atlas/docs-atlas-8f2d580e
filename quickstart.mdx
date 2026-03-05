@@ -1,80 +1,282 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart Guide
+description: Get Karma POS up and running in 5 minutes with this quick setup guide
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+Get Karma POS running on your local machine in just a few minutes. This guide will walk you through the essential steps to start the development server and access the application.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  This quickstart assumes you have Node.js 18+ and npm installed. If not, download them from [nodejs.org](https://nodejs.org/) first.
 </Note>
+
+## Quick Setup in 4 Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the Karma POS repository to your local machine:
+
+    ```bash
+    git clone https://github.com/your-organization/karma-pos.git
+    cd karma-pos
+    ```
+
+    <Info>
+      Replace `your-organization/karma-pos` with the actual repository URL provided by your organization.
+    </Info>
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required npm packages:
+
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+
+      ```bash pnpm
+      pnpm install
+      ```
+    </CodeGroup>
+
+    This will install all dependencies including:
+    - Angular 19 framework
+    - PrimeNG UI components
+    - SignalR for real-time communication
+    - PDF generation libraries
+    - Excel import/export tools
+
+    <Tip>
+      Installation typically takes 2-5 minutes depending on your internet connection.
+    </Tip>
+  </Step>
+
+  <Step title="Start Development Server">
+    Launch the Angular development server:
+
+    ```bash
+    ng serve
+    ```
+
+    Or use the npm script:
+
+    ```bash
+    npm start
+    ```
+
+    Wait for the compilation to complete. You'll see output like:
+
+    ```bash
+    ** Angular Live Development Server is listening on localhost:4200 **
+    ✔ Compiled successfully.
+    ```
+
+    <Warning>
+      The first compilation may take 30-60 seconds. Subsequent builds will be much faster with Angular's incremental compilation.
+    </Warning>
+  </Step>
+
+  <Step title="Access the Application">
+    Open your web browser and navigate to:
+
+    ```
+    http://localhost:4200
+    ```
+
+    You should see the Karma POS login screen. The application will automatically reload when you make changes to the source code.
+
+    <Info>
+      **Default Development Port**: The application runs on port 4200 by default. If this port is busy, Angular CLI will automatically use the next available port (4201, 4202, etc.).
+    </Info>
+  </Step>
+</Steps>
+
+## What's Next?
+
+Now that you have Karma POS running, here are some recommended next steps:
+
+<CardGroup cols={2}>
+  <Card title="Initial Setup Wizard" icon="wand-magic-sparkles">
+    Complete the initial configuration wizard to set up:
+    - Company information
+    - Business address and contact details
+    - Tax ID and owner information
+    - Currency and timezone settings
+  </Card>
+
+  <Card title="Configure Backend API" icon="server">
+    Connect to your backend API by configuring:
+    - API endpoint URLs
+    - Authentication credentials
+    - SignalR hub connections
+  </Card>
+
+  <Card title="Set Up Warehouses" icon="warehouse">
+    Create your warehouse locations:
+    - Main store location
+    - Additional warehouses
+    - Stock transfer rules
+  </Card>
+
+  <Card title="Add Your First Products" icon="box">
+    Start building your inventory:
+    - Create product categories
+    - Add products manually
+    - Import products via Excel
+  </Card>
+</CardGroup>
+
+## Keyboard Shortcuts
+
+Karma POS includes powerful keyboard shortcuts for efficient operation:
+
+| Shortcut | Action |
+|----------|--------|
+| **F2** | Open product search dialog |
+| **F3** | Open payment dialog |
+| **F4** | Process sale/checkout |
+| **F5** | Create new invoice |
+
+<Tip>
+  Master these keyboard shortcuts to dramatically speed up your checkout process!
+</Tip>
+
+## Common Development Commands
+
+Here are the most useful commands for working with Karma POS:
+
+<Accordion title="Development Server">
+  ```bash
+  # Start development server
+  ng serve
+  
+  # Start with custom port
+  ng serve --port 4300
+  
+  # Start and automatically open browser
+  ng serve --open
+  ```
+</Accordion>
+
+<Accordion title="Building for Production">
+  ```bash
+  # Build production bundle
+  ng build
+  
+  # Build with production optimizations
+  ng build --configuration production
+  
+  # Output will be in dist/sakai-ng/
+  ```
+</Accordion>
+
+<Accordion title="Code Quality">
+  ```bash
+  # Format code with Prettier
+  npm run format
+  
+  # Run unit tests
+  npm test
+  
+  # Run tests in watch mode
+  ng test --watch
+  ```
+</Accordion>
+
+<Accordion title="Development Tools">
+  ```bash
+  # Generate new component
+  ng generate component component-name
+  
+  # Generate new service
+  ng generate service service-name
+  
+  # See all available generators
+  ng generate --help
+  ```
+</Accordion>
+
+## Verification Checklist
+
+After completing the quickstart, verify your installation:
+
+- [ ] Application loads at `http://localhost:4200`
+- [ ] Login screen displays correctly
+- [ ] No console errors in browser developer tools
+- [ ] Hot module replacement works (changes auto-reload)
+- [ ] All UI components render properly
+
+## Troubleshooting Quick Fixes
+
+<AccordionGroup>
+  <Accordion title="Port 4200 Already in Use">
+    If you see an error that port 4200 is already in use:
+
+    ```bash
+    # Option 1: Use a different port
+    ng serve --port 4300
+    
+    # Option 2: Kill the process using port 4200
+    # On Windows:
+    netstat -ano | findstr :4200
+    taskkill /PID <PID> /F
+    
+    # On macOS/Linux:
+    lsof -ti:4200 | xargs kill -9
+    ```
+  </Accordion>
+
+  <Accordion title="npm install Fails">
+    If dependencies fail to install:
+
+    ```bash
+    # Clear npm cache
+    npm cache clean --force
+    
+    # Delete node_modules and package-lock.json
+    rm -rf node_modules package-lock.json
+    
+    # Reinstall
+    npm install
+    ```
+  </Accordion>
+
+  <Accordion title="Compilation Errors">
+    If you encounter TypeScript compilation errors:
+
+    ```bash
+    # Update Angular CLI
+    npm install -g @angular/cli@latest
+    
+    # Reinstall dependencies
+    rm -rf node_modules package-lock.json
+    npm install
+    
+    # Clear Angular cache
+    rm -rf .angular
+    ```
+  </Accordion>
+
+  <Accordion title="Blank White Screen">
+    If the application loads but shows a blank screen:
+
+    1. Open browser developer tools (F12)
+    2. Check the Console tab for JavaScript errors
+    3. Check the Network tab for failed API requests
+    4. Verify backend API is running and accessible
+    5. Check CORS configuration if using external API
+  </Accordion>
+</AccordionGroup>
+
+## Need More Details?
+
+For comprehensive setup instructions including backend configuration, database setup, and production deployment, see the [Installation Guide](/installation).
+
+<Card title="Full Installation Guide" icon="book" href="/installation">
+  Complete step-by-step installation and configuration documentation
+</Card>

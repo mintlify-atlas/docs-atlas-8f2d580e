@@ -1,97 +1,157 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Karma POS Documentation"
+description: "Complete point of sale system for retail businesses"
 ---
 
-## Setting up
+<div className="relative bg-gradient-to-br from-[#3cbcab] via-[#349b8b] to-[#2bb2cc] dark:from-[#2a9a8b] dark:via-[#267a6b] dark:to-[#1a7a8a] py-20 px-4 sm:px-6 lg:px-8 rounded-2xl overflow-hidden mb-16">
+  <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+  <div className="relative max-w-7xl mx-auto">
+    <div className="text-center">
+      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+        Welcome to Karma POS
+      </h1>
+      <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto mb-8">
+        A comprehensive point of sale system built with Angular for retail businesses. Manage sales, inventory, customers, and operations—all in one place.
+      </p>
+      <div className="flex flex-wrap gap-4 justify-center">
+        <a 
+          href="/quickstart" 
+          className="inline-flex items-center px-6 py-3 bg-white text-[#3cbcab] font-semibold rounded-lg hover:bg-gray-100 transition-colors no-underline"
+        >
+          Get Started
+          <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+        <a 
+          href="/features/pos-system" 
+          className="inline-flex items-center px-6 py-3 bg-white/10 text-white font-semibold rounded-lg border border-white/30 hover:bg-white/20 transition-colors no-underline"
+        >
+          Explore Features
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Quick Start</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Get your Karma POS system up and running in minutes</p>
+  
+  <Steps>
+    <Step title="Clone and Install">
+      Clone the repository and install dependencies to get started with your local development environment.
+      
+      ```bash
+      git clone https://github.com/Neider0608/pos-frontEnd.git
+      cd pos-frontEnd
+      npm install
+      ```
+    </Step>
+    
+    <Step title="Configure Your Environment">
+      Set up your environment configuration and API endpoints. The system requires connection to your backend API server.
+      
+      <Info>
+        The default API endpoint is configured at `https://localhost:7197/api/`. Update this in your service files as needed.
+      </Info>
+    </Step>
+    
+    <Step title="Run Development Server">
+      Start the Angular development server and access your POS system in the browser.
+      
+      ```bash
+      ng serve
+      ```
+      
+      Navigate to `http://localhost:4200/` to see your application running.
+    </Step>
+    
+    <Step title="Set Up Initial Configuration">
+      Complete the initial setup wizard to configure your company, warehouses, and user permissions.
+      
+      [Learn more about initial setup →](/installation)
+    </Step>
+  </Steps>
+</div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Core Features</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Everything you need to run a modern retail business</p>
+  
+  <CardGroup cols={2}>
+    <Card title="Point of Sale" icon="cash-register" href="/features/pos-system">
+      Process sales with barcode scanning, customer selection, and flexible payment options
+    </Card>
+    <Card title="Inventory Management" icon="boxes-stacked" href="/features/inventory-management">
+      Track stock levels, manage products, and receive low-stock alerts automatically
+    </Card>
+    <Card title="Customer Management" icon="users" href="/features/customer-management">
+      Maintain customer records, track purchase history, and manage customer relationships
+    </Card>
+    <Card title="Sales & Invoicing" icon="file-invoice-dollar" href="/features/sales-invoicing">
+      Generate invoices, manage quotes, and track all sales transactions
+    </Card>
+    <Card title="Cash Register" icon="calculator" href="/features/cash-register">
+      Manage cash flow with multi-payment method support and register reconciliation
+    </Card>
+    <Card title="Reports & Analytics" icon="chart-line" href="/features/reports-analytics">
+      Get insights with comprehensive sales reports and business analytics
+    </Card>
+  </CardGroup>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Advanced Capabilities</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Powerful features to grow your business</p>
+  
+  <CardGroup cols={3}>
+    <Card title="WhatsApp Integration" icon="message" href="/features/whatsapp-integration">
+      Multi-agent chat support for customer communication
+    </Card>
+    <Card title="Financing Options" icon="credit-card" href="/features/financing">
+      Offer flexible payment plans and credit management
+    </Card>
+    <Card title="Promotions" icon="tags" href="/features/promotions">
+      Create and manage discount campaigns and special offers
+    </Card>
+  </CardGroup>
+</div>
 
-Design a docs site that looks great and empowers your users.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">User Guides</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Step-by-step instructions for daily operations</p>
+  
+  <CardGroup cols={2}>
+    <Card title="Making Sales" icon="shopping-cart" href="/guides/making-sales">
+      Learn how to process sales transactions efficiently
+    </Card>
+    <Card title="Managing Inventory" icon="warehouse" href="/guides/managing-inventory">
+      Keep your inventory organized and up-to-date
+    </Card>
+    <Card title="Processing Payments" icon="money-bill" href="/guides/processing-payments">
+      Handle different payment methods and complete transactions
+    </Card>
+    <Card title="Handling Quotes" icon="file-lines" href="/guides/handling-quotes">
+      Create and convert quotes into sales
+    </Card>
+  </CardGroup>
+</div>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="bg-[#f5f5f5] dark:bg-[#1a1d27] border border-transparent dark:border-[#27272a] rounded-2xl p-8 text-center">
+    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Ready to get started?</h2>
+    <p className="text-base text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
+      Set up your Karma POS system and start managing your retail business more efficiently today.
+    </p>
+    <a 
+      href="/quickstart" 
+      className="inline-flex items-center px-6 py-3 bg-[#3cbcab] text-white font-semibold rounded-lg hover:bg-[#349b8b] transition-colors no-underline"
+    >
+      View Quickstart Guide
+      <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </svg>
+    </a>
+  </div>
+</div>

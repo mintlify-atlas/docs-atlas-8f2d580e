@@ -1,0 +1,654 @@
+---
+title: "Financing & Credit Management"
+description: "Customer financing system with payment plans, installments, and payment tracking"
+icon: "credit-card"
+---
+
+## Overview
+
+Karma POS includes a comprehensive financing system that allows you to offer credit to customers, track payment plans, manage installments, and generate payment receipts. The system supports multiple payment methods and provides detailed tracking of all financial transactions.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Payment Plans" icon="calendar">
+    Create flexible payment plans with custom installment schedules
+  </Card>
+  <Card title="Multiple Payment Methods" icon="wallet">
+    Accept cash, card, transfers, and mixed payments
+  </Card>
+  <Card title="Payment Tracking" icon="chart-line">
+    Track payment history and remaining balances in real-time
+  </Card>
+  <Card title="Receipt Generation" icon="file-invoice">
+    Generate professional PDF receipts and clearance certificates
+  </Card>
+</CardGroup>
+
+## Architecture
+
+The financing system is built with the following components:
+
+**Financing Component** (`financing.component.ts:32`)
+- Main UI component for managing financing records
+- Handles payment registration and viewing
+- Generates PDF documents
+
+**POS Service**
+- HTTP API client for financing operations
+- Manages financing records and payment history
+
+## Data Model
+
+### Financing Record
+
+```typescript
+export interface GetFinancing {
+  id: number;
+  customerName?: string;
+  invoiceNumber?: string;
+  totalFinanced: number;
+  currentBalance: number;
+  interestRate?: number;
+  totalInstallments?: number;
+  startDate?: Date;
+  dueDate?: Date;
+  status?: string;
+  
+  // Payment details
+  paymentId?: number;
+  receiptNumber?: string;
+  paymentDate?: Date;
+  paymentAmount?: number;
+  paymentMethod?: string;
+  notes?: string;
+  registeredByUser?: number;
+  registeredAt?: Date;
+  remainingBalance?: number;
+}
+```
+
+**Reference:** `financing.ts:1`
+
+### Payment Request
+
+```typescript
+export interface FinancingRequest {
+  id?: number;
+  paymentAmount?: number;
+  paymentMethod?: string;
+  notes?: string;
+  registeredByUser?: number;
+}
+```
+
+**Reference:** `financing.ts:23`
+
+## How It Works
+
+### 1. Loading Financing Records
+
+Load all active financing records for display:
+
+```typescript
+loadFinancings(showMessage = false, number: number = 0) {
+  this.posService.getFinancings().subscribe({
+    next: (res) => {
+      this.financings = res.data || [];
+      
+      // Reload selected financing if viewing payments
+      if (number === 1) {
+        this.selectedFinancing = this.financings.find(
+          (f) => f.id === this.selectedFinancing?.id
+        ) || null;
+        this.viewPayments(this.selectedFinancing);
+      }
+      
+      this.filteredFinancings = [...this.financings];
+      
+      if (showMessage) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Datos actualizados',
+          detail: 'Se cargaron todas las financiaciones correctamente.'
+        });
+      }
+    },
+    error: () => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudieron cargar las financiaciones.'
+      });
+    }
+  });
+}
+```
+
+**Reference:** `financing.component.ts:113`
+
+### 2. Viewing Payment History
+
+View detailed payment history for a financing record:
+
+```typescript
+viewPayments(financing: any) {
+  this.selectedFinancing = financing;
+  this.showPaymentsDialog = true;
+  
+  // Load payment history from backend
+  this.posService.getFinancingPayments(financing.id).subscribe({
+    next: (res) => {
+      this.financingPayments = res.data || [];
+    },
+    error: () => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudieron cargar los pagos del cliente.'
+      });
+    }
+  });
+}
+```
+
+**Reference:** `financing.component.ts:143`
+
+### 3. Registering Payments
+
+#### Opening Payment Dialog
+
+Open the dialog to register a new payment:
+
+```typescript
+openPaymentDialog(financing: any) {
+  this.selectedFinancing = financing;
+  this.newPayment = { amount: 0, method: '', notes: '' };
+  this.showPaymentDialog = true;
+}
+```
+
+**Reference:** `financing.component.ts:165`
+
+#### Saving Payment
+
+Validate and save a new payment:
+
+```typescript
+savePayment() {
+  // Validate payment amount
+  if (!this.newPayment.amount || this.newPayment.amount <= 0) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Campo requerido',
+      detail: 'Debes ingresar un valor de abono válido.'
+    });
+    return;
+  }
+  
+  // Validate payment doesn't exceed remaining balance
+  const remainingBalance = this.selectedFinancing?.currentBalance || 0;
+  if (this.newPayment.amount > remainingBalance) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Monto inválido',
+      detail: `El valor ingresado (${this.formatCurrency(this.newPayment.amount)}) 
+               supera el saldo pendiente (${this.formatCurrency(remainingBalance)}).`
+    });
+    return;
+  }
+  
+  const payload = {
+    id: this.selectedFinancing.id,
+    paymentAmount: this.newPayment.amount,
+    paymentMethod: this.newPayment.method,
+    notes: this.newPayment.notes,
+    registeredByUser: 1
+  };
+  
+  this.posService.addFinancingPayment(payload).subscribe({
+    next: (res) => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Abono registrado',
+        detail: res.message || 'Pago registrado correctamente.'
+      });
+      
+      this.showPaymentDialog = false;
+      this.loadFinancings(false, 1);
+    },
+    error: () => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo registrar el abono.'
+      });
+    }
+  });
+}
+```
+
+**Reference:** `financing.component.ts:171`
+
+## Payment Methods
+
+The system supports multiple payment methods:
+
+```typescript
+paymentMethods = [
+  { label: '💵 Efectivo', value: 'cash' },
+  { label: '💳 Tarjeta', value: 'card' },
+  { label: '🏦 Transferencia', value: 'transfer' },
+  { label: '📅 Financiado', value: 'financed' },
+  { label: '📝 Otro', value: 'other' }
+];
+```
+
+**Reference:** `financing.component.ts:42`
+
+## PDF Receipt Generation
+
+### Payment Receipt
+
+Generate detailed payment receipts with payment history:
+
+```typescript
+generateReceipt(payment: any) {
+  const client = this.selectedFinancing?.customerName || 'Cliente';
+  const invoice = this.selectedFinancing?.invoiceNumber || '-';
+  const payments = this.financingPayments || [];
+  const totalPaid = payments.reduce(
+    (sum: number, p: any) => sum + (p.paymentAmount || 0), 0
+  );
+  const lastPayment = payment || payments[0];
+  
+  const docDefinition: any = {
+    pageSize: 'A4',
+    pageMargins: [40, 50, 40, 50],
+    content: [
+      // Header
+      {
+        columns: [
+          [
+            { text: 'MI TIENDA POS', style: 'title' },
+            { text: 'Comprobante de Financiación', style: 'subtitle' },
+            { text: new Date().toLocaleString('es-CO'), style: 'date' }
+          ],
+          {
+            alignment: 'right',
+            stack: [
+              { text: `Recibo N° ${lastPayment.receiptNumber || '-'}`, 
+                style: 'receipt' },
+              { text: `Factura N° ${invoice}`, style: 'small' }
+            ]
+          }
+        ]
+      },
+      
+      // Customer information
+      {
+        margin: [0, 20, 0, 10],
+        table: {
+          widths: ['25%', '*'],
+          body: [
+            [{ text: 'Cliente:', style: 'label' },
+             { text: client, style: 'value' }],
+            [{ text: 'Factura:', style: 'label' },
+             { text: invoice, style: 'value' }],
+            [{ text: 'Método de Pago:', style: 'label' },
+             { text: this.getPaymentLabel(lastPayment.paymentMethod), 
+               style: 'value' }],
+            [{ text: 'Observaciones:', style: 'label' },
+             { text: lastPayment.notes || '-', style: 'value' }]
+          ]
+        },
+        layout: 'noBorders'
+      },
+      
+      // Last payment details
+      {
+        margin: [0, 10, 0, 20],
+        stack: [
+          { text: 'Detalle del Último Pago', style: 'sectionTitle' },
+          {
+            columns: [
+              { text: `Monto Pagado: ${this.formatCurrency(lastPayment.paymentAmount)}`, 
+                style: 'amount' },
+              { text: `Saldo Restante: ${this.formatCurrency(lastPayment.remainingBalance)}`, 
+                style: 'amount', alignment: 'right' }
+            ]
+          }
+        ]
+      },
+      
+      // Payment history table
+      { text: 'Historial de Pagos', style: 'sectionTitle', margin: [0, 10, 0, 6] },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['auto', 'auto', '*', 'auto', 'auto'],
+          body: [
+            [
+              { text: 'Fecha', style: 'tableHeader' },
+              { text: 'Recibo', style: 'tableHeader' },
+              { text: 'Método', style: 'tableHeader' },
+              { text: 'Valor Pagado', style: 'tableHeader', alignment: 'right' },
+              { text: 'Saldo Restante', style: 'tableHeader', alignment: 'right' }
+            ],
+            ...payments.map((p: any) => [
+              { text: new Date(p.paymentDate).toLocaleDateString('es-CO'), 
+                style: 'tableCell' },
+              { text: p.receiptNumber || '-', style: 'tableCell' },
+              { text: this.getPaymentLabel(p.paymentMethod), style: 'tableCell' },
+              { text: this.formatCurrency(p.paymentAmount), 
+                style: ['tableCell', 'right'] },
+              { text: this.formatCurrency(p.remainingBalance), 
+                style: ['tableCell', 'right'] }
+            ])
+          ]
+        }
+      },
+      
+      // Totals
+      {
+        margin: [0, 15, 0, 0],
+        table: {
+          widths: ['*', 'auto'],
+          body: [
+            [{ text: 'Total Pagado:', style: 'totalsLabel' },
+             { text: this.formatCurrency(totalPaid), style: 'totalsValue' }],
+            [{ text: 'Saldo Pendiente:', style: 'totalsLabel' },
+             { text: this.formatCurrency(this.selectedFinancing?.currentBalance || 0), 
+               style: 'totalsValue' }]
+          ]
+        },
+        layout: 'noBorders'
+      },
+      
+      // Signature
+      {
+        margin: [0, 40, 0, 0],
+        stack: [
+          { text: '____________________________', alignment: 'center' },
+          { text: 'Firma del Cliente', alignment: 'center', 
+            italics: true, fontSize: 9 }
+        ]
+      }
+    ],
+    styles: {
+      title: { fontSize: 16, bold: true, color: '#222' },
+      subtitle: { fontSize: 11, color: '#555', margin: [0, 2, 0, 2] },
+      date: { fontSize: 9, color: '#888' },
+      receipt: { fontSize: 10, bold: true, color: '#333' },
+      small: { fontSize: 9, color: '#777' },
+      label: { bold: true, fontSize: 9, color: '#444' },
+      value: { fontSize: 9, color: '#222' },
+      sectionTitle: { fontSize: 11, bold: true, color: '#2c5282', 
+                      margin: [0, 10, 0, 4] },
+      tableHeader: { bold: true, fontSize: 9, color: '#333' },
+      tableCell: { fontSize: 8.8, color: '#333' },
+      right: { alignment: 'right' },
+      amount: { fontSize: 10, bold: true, color: '#2d3748' },
+      totalsLabel: { fontSize: 10, bold: true, color: '#444', 
+                     alignment: 'right' },
+      totalsValue: { fontSize: 10, bold: true, color: '#000', 
+                     alignment: 'right' }
+    }
+  };
+  
+  pdfMake.createPdf(docDefinition).open();
+}
+```
+
+**Reference:** `financing.component.ts:226`
+
+### Clearance Certificate (Paz y Salvo)
+
+Generate a clearance certificate when financing is fully paid:
+
+```typescript
+generateClearance() {
+  const client = this.selectedFinancing?.customerName || 'Cliente';
+  const invoice = this.selectedFinancing?.invoiceNumber || '-';
+  const total = this.formatCurrency(this.selectedFinancing?.totalFinanced || 0);
+  const totalPaid = this.formatCurrency(
+    (this.financingPayments || []).reduce(
+      (sum: number, p: any) => sum + (p.paymentAmount || 0), 0
+    )
+  );
+  const date = new Date().toLocaleDateString('es-CO');
+  
+  const docDefinition: any = {
+    pageSize: 'A4',
+    pageMargins: [60, 70, 60, 70],
+    content: [
+      // Header
+      {
+        stack: [
+          { text: 'MI TIENDA POS', style: 'headerTitle' },
+          { text: 'Certificado de Paz y Salvo', style: 'headerSubtitle' },
+          { text: `Fecha de emisión: ${date}`, style: 'headerDate' }
+        ],
+        alignment: 'center',
+        margin: [0, 0, 0, 10]
+      },
+      
+      // Client information
+      {
+        style: 'clientBox',
+        table: {
+          widths: ['30%', '*'],
+          body: [
+            [{ text: 'Cliente:', style: 'label' },
+             { text: client, style: 'value' }],
+            [{ text: 'Factura N°:', style: 'label' },
+             { text: invoice, style: 'value' }],
+            [{ text: 'Monto Financiado:', style: 'label' },
+             { text: total, style: 'value' }],
+            [{ text: 'Pagos Totales:', style: 'label' },
+             { text: totalPaid, style: 'value' }]
+          ]
+        },
+        layout: 'noBorders',
+        margin: [0, 0, 0, 30]
+      },
+      
+      // Certificate text
+      {
+        text: [
+          'Por medio del presente documento se certifica que el cliente ',
+          { text: client, bold: true },
+          ' ha cancelado en su totalidad las obligaciones económicas '
+          'derivadas de la factura ',
+          { text: invoice, bold: true },
+          '. '
+        ],
+        style: 'paragraph'
+      },
+      {
+        text: 'De acuerdo con los registros del sistema, no presenta saldo '
+              'pendiente ni compromisos financieros con la empresa a la fecha '
+              'de emisión del presente certificado.',
+        style: 'paragraph',
+        margin: [0, 10, 0, 10]
+      },
+      {
+        text: 'Este certificado se expide a solicitud del interesado y para '
+              'los fines que estime convenientes.',
+        style: 'paragraph',
+        margin: [0, 0, 0, 30]
+      },
+      
+      // Status summary
+      {
+        table: {
+          widths: ['*', 'auto'],
+          body: [
+            [{ text: 'Saldo Actual', style: 'totalsLabel' },
+             { text: this.formatCurrency(0), style: 'totalsValue' }],
+            [{ text: 'Estado de la Financiación', style: 'totalsLabel' },
+             { text: 'Cancelada ✅', style: 'totalsValue' }]
+          ]
+        },
+        layout: 'noBorders',
+        margin: [0, 20, 0, 40]
+      },
+      
+      // Signature
+      {
+        stack: [
+          { text: '_____________________________', alignment: 'center', 
+            margin: [0, 0, 0, 2] },
+          { text: 'Firma Autorizada', alignment: 'center', 
+            italics: true, fontSize: 10 }
+        ]
+      }
+    ],
+    styles: {
+      headerTitle: { fontSize: 18, bold: true, color: '#2c5282' },
+      headerSubtitle: { fontSize: 13, color: '#444', margin: [0, 2, 0, 5] },
+      headerDate: { fontSize: 9, color: '#777' },
+      clientBox: { margin: [0, 10, 0, 20] },
+      label: { bold: true, fontSize: 10, color: '#555' },
+      value: { fontSize: 10, color: '#222' },
+      paragraph: { fontSize: 11, color: '#333', lineHeight: 1.5, 
+                   alignment: 'justify' },
+      totalsLabel: { fontSize: 10, bold: true, color: '#555', 
+                     alignment: 'right' },
+      totalsValue: { fontSize: 10, bold: true, color: '#2c5282', 
+                     alignment: 'right' }
+    }
+  };
+  
+  pdfMake.createPdf(docDefinition).open();
+}
+```
+
+**Reference:** `financing.component.ts:379`
+
+## Filtering and Search
+
+Filter financing records by customer or invoice:
+
+```typescript
+applyFilters() {
+  const c = this.filters.customer.toLowerCase().trim();
+  const i = this.filters.invoice.toLowerCase().trim();
+  
+  this.filteredFinancings = this.financings.filter((f) => 
+    (!c || f.customerName.toLowerCase().includes(c)) && 
+    (!i || f.invoiceNumber.toLowerCase().includes(i))
+  );
+}
+
+resetFilters() {
+  this.filters = { customer: '', invoice: '' };
+  this.filteredFinancings = [...this.financings];
+}
+```
+
+**Reference:** `financing.component.ts:512`
+
+## Currency Formatting
+
+Format currency values for Colombian Pesos:
+
+```typescript
+formatCurrency(value: number): string {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0
+  }).format(value);
+}
+```
+
+**Reference:** `financing.component.ts:504`
+
+## Payment Method Labels
+
+Get human-readable labels for payment methods:
+
+```typescript
+getPaymentLabel(value: string): string {
+  return this.paymentMethods.find((p) => p.value === value)?.label || value;
+}
+```
+
+**Reference:** `financing.component.ts:497`
+
+## Permissions
+
+The financing module respects role-based permissions:
+
+```typescript
+private applyPermissions(): void {
+  const moduleName = 'Financiaciones';
+  const permission = this.permissions.find(
+    (p) => p.module === moduleName
+  );
+  
+  if (!permission) {
+    this.resetPermissions();
+    return;
+  }
+  
+  this.canView = permission.canView;
+  this.canCreate = permission.canCreate;
+  this.canEdit = permission.canEdit;
+  this.canDelete = permission.canDelete;
+  this.canExport = permission.canExport;
+}
+```
+
+**Reference:** `financing.component.ts:85`
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Payment Validation">
+    Always validate that payment amounts don't exceed the remaining balance. The system prevents overpayments to maintain data integrity.
+  </Accordion>
+  
+  <Accordion title="Receipt Generation">
+    Generate receipts immediately after payment registration to provide customers with proof of payment.
+  </Accordion>
+  
+  <Accordion title="Payment Tracking">
+    Maintain detailed payment history including payment method, date, and notes for complete audit trails.
+  </Accordion>
+  
+  <Accordion title="Clearance Certificates">
+    Only generate clearance certificates (Paz y Salvo) when the financing is fully paid (currentBalance = 0).
+  </Accordion>
+</AccordionGroup>
+
+## Integration Points
+
+### With Sales Module
+
+Financing records are typically created when:
+- Customer selects "financing" as payment method during checkout
+- Invoice total exceeds available credit
+- Payment plan is negotiated at point of sale
+
+### With Customer Module
+
+Financing records are linked to customer accounts to:
+- Track customer credit history
+- Calculate available credit limits
+- Generate customer financial reports
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Sales & Invoicing" icon="cash-register" href="/features/sales-invoicing">
+    Create financed sales and generate invoices
+  </Card>
+  <Card title="Customer Management" icon="users" href="/features/customer-management">
+    Manage customer credit profiles and limits
+  </Card>
+  <Card title="Reports" icon="chart-bar" href="/features/reports-analytics">
+    View financing and payment analytics
+  </Card>
+</CardGroup>
